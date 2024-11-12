@@ -15,8 +15,11 @@ CORS(app)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///missed_calls.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SMSAPI_KEY'] = 'LEUn7C6fUtmy5u72UkbuxkkCU0ZeJVrW1RiFS6C4'
-app.config['SMSAPI_SENDER'] = 'MissCallApp'
+
+# Sinch Configuration
+app.config['SINCH_SERVICE_PLAN_ID'] = 'e64d3dd7c1ea419abc8d24a3ea18f898'
+app.config['SINCH_API_TOKEN'] = '427214e99b1f4b7a8c0fbd99927647be'
+app.config['SINCH_SENDER'] = 'MissCall'
 
 # Initialize extensions
 db = SQLAlchemy(app)
@@ -43,32 +46,44 @@ class MissedCall(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-def send_sms(phone_number, message):
+def send_sinch_sms(phone_number, message):
     try:
-        # SMSAPI.bg endpoint
-        sms_url = 'https://api.smsapi.bg/send'
+        # Format phone number (remove + if present and ensure it starts with 359)
+        formatted_phone = phone_number.replace('+', '')
+        if not formatted_phone.startswith('359'):
+            formatted_phone = '359' + formatted_phone.lstrip('0')
+
+        url = f"https://us.sms.api.sinch.com/xms/v1/{app.config['SINCH_SERVICE_PLAN_ID']}/batches"
         
         payload = {
-            'to': phone_number,
-            'message': message,
-            'sender': app.config['SMSAPI_SENDER']
+            "from": app.config['SINCH_SENDER'],
+            "to": [formatted_phone],
+            "body": message
         }
         
         headers = {
-            'Authorization': f'Bearer {app.config["SMSAPI_KEY"]}',
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {app.config['SINCH_API_TOKEN']}"
         }
 
-        response = requests.post(sms_url, json=payload, headers=headers)
-        print(f"SMS API Response: {response.text}")  # Debug log
+        # Debug prints
+        print("Attempting to send SMS with:")
+        print(f"URL: {url}")
+        print(f"Payload: {payload}")
         
-        if response.status_code == 200:
-            return True, "SMS sent successfully"
+        response = requests.post(url, json=payload, headers=headers)
+        
+        print(f"Response Status Code: {response.status_code}")
+        print(f"Response Text: {response.text}")
+        
+        if response.status_code == 201:
+            print(f"Message sent successfully: {response.json()}")
+            return True, "Message sent successfully"
         else:
-            return False, f"SMS failed: {response.text}"
-
+            return False, f"Failed to send message: {response.text}"
+            
     except Exception as e:
-        print(f"SMS Error: {str(e)}")  # Debug log
+        print(f"Error sending SMS: {str(e)}")
         return False, str(e)
 
 # Routes
@@ -124,19 +139,57 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+# API Routes
 @app.route('/api/test', methods=['GET'])
 def test_connection():
     print("Test connection received!")
     return jsonify({'status': 'success', 'message': 'Connection successful!'})
 
+@app.route('/api/test-route')
+def test_route():
+    return jsonify({'message': 'Test route works!'})
+
+@app.route('/api/check-user/<username>')
+def check_user(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        return jsonify({
+            'id': user.id,
+            'username': user.username,
+            'phone_number': user.phone_number
+        })
+    return jsonify({'error': 'User not found'}), 404
+
+@app.route('/api/fix-user-ids')
+def fix_user_ids():
+    try:
+        # Get damirche's numeric ID
+        user = User.query.filter_by(username='damirche').first()
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+
+        # Update all missed calls
+        calls = MissedCall.query.filter_by(user_id='damirche').all()
+        for call in calls:
+            call.user_id = user.id
+        
+        db.session.commit()
+        return jsonify({'message': f'Updated {len(calls)} calls'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/test-sms', methods=['POST'])
 def test_sms():
     try:
         data = request.json
-        phone_number = data.get('phone_number')
-        message = data.get('message', 'Test message from MissCall App')
+        if not data or 'phone_number' not in data:
+            return jsonify({'status': 'error', 'message': 'Phone number required'}), 400
 
-        success, response_message = send_sms(phone_number, message)
+        phone_number = data['phone_number']
+        message = data.get('message', 'Test message from MissCall App')
+        
+        print(f"Testing SMS to {phone_number}: {message}")
+        success, response_message = send_sinch_sms(phone_number, message)
         
         if success:
             return jsonify({'status': 'success', 'message': response_message}), 200
@@ -144,6 +197,7 @@ def test_sms():
             return jsonify({'status': 'error', 'message': response_message}), 500
 
     except Exception as e:
+        print(f"Error in test_sms: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 @app.route('/api/missed-call', methods=['POST'])
@@ -151,15 +205,25 @@ def handle_missed_call():
     print("Received data:", request.json)
     try:
         data = request.json
+        
+        # If user_id is username, get the numeric ID
+        user_id = data['user_id']
+        if isinstance(user_id, str) and not user_id.isdigit():
+            user = User.query.filter_by(username=user_id).first()
+            if user:
+                user_id = user.id
+            else:
+                return jsonify({'error': 'User not found'}), 404
+
         missed_call = MissedCall(
-            user_id=data['user_id'],
+            user_id=user_id,
             caller_number=data['caller_number'],
             call_time=datetime.strptime(data['call_time'], '%Y-%m-%d %H:%M:%S')
         )
         
         # Send SMS to the caller
         message = "Sorry I missed your call. I'll get back to you as soon as possible."
-        success, sms_response = send_sms(missed_call.caller_number, message)
+        success, sms_response = send_sinch_sms(missed_call.caller_number, message)
         
         if success:
             missed_call.message_sent = message
