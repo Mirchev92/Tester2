@@ -111,6 +111,22 @@
         input[type="tel"]::placeholder {
             letter-spacing: normal;
         }
+
+        .password-requirements {
+            display: block;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 8px;
+        }
+
+        .password-requirements ul {
+            margin-left: 20px;
+            margin-top: 4px;
+        }
+
+        .password-requirements li {
+            margin-bottom: 2px;
+        }
     </style>
 </head>
 <body>
@@ -143,6 +159,16 @@
                     required 
                     placeholder="Choose a strong password"
                 >
+                <small class="password-requirements">
+                    Password must contain:
+                    <ul>
+                        <li>At least 8 characters</li>
+                        <li>At least one uppercase letter</li>
+                        <li>At least one lowercase letter</li>
+                        <li>At least one number</li>
+                        <li>At least one special character (!@#$%^&*(),.?":{}|<>)</li>
+                    </ul>
+                </small>
             </div>
             <div class="form-group">
                 <label for="phone_number">Phone Number</label>

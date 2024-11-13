@@ -6,6 +6,10 @@ from datetime import datetime
 from flask_cors import CORS
 import os
 import requests
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+import re
+from datetime import timedelta
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -25,6 +29,13 @@ app.config['SINCH_SENDER'] = 'MissCall'
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+# Add rate limiter
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 # Define models
 class User(UserMixin, db.Model):
@@ -86,6 +97,28 @@ def send_sinch_sms(phone_number, message):
         print(f"Error sending SMS: {str(e)}")
         return False, str(e)
 
+# Add password validation function
+def is_password_valid(password):
+    if len(password) < 8:
+        return False, "Password must be at least 8 characters long"
+    if not re.search(r"[A-Z]", password):
+        return False, "Password must contain at least one uppercase letter"
+    if not re.search(r"[a-z]", password):
+        return False, "Password must contain at least one lowercase letter"
+    if not re.search(r"\d", password):
+        return False, "Password must contain at least one number"
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False, "Password must contain at least one special character"
+    return True, ""
+
+# Update app configuration
+app.config.update(
+    PERMANENT_SESSION_LIFETIME=timedelta(days=1),  # Session expires after 1 day
+    SESSION_COOKIE_SECURE=True,  # Cookies only sent over HTTPS
+    SESSION_COOKIE_HTTPONLY=True,  # Prevent JavaScript access to session cookie
+    SESSION_COOKIE_SAMESITE='Lax'  # Protect against CSRF
+)
+
 # Routes
 @app.route('/')
 def index():
@@ -98,11 +131,17 @@ def register():
         password = request.form['password']
         phone_number = request.form['phone_number']
         
+        # Add password validation
+        is_valid, error_message = is_password_valid(password)
+        if not is_valid:
+            flash(error_message)
+            return redirect(url_for('register'))
+        
         if User.query.filter_by(username=username).first():
             flash('Username already exists')
             return redirect(url_for('register'))
         
-        hashed_password = generate_password_hash(password)
+        hashed_password = generate_password_hash(password, method='pbkdf2:sha256:600000')
         new_user = User(username=username, password=hashed_password, phone_number=phone_number)
         
         db.session.add(new_user)
@@ -114,6 +153,7 @@ def register():
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute") # Rate limiting for login attempts
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -121,7 +161,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
-            login_user(user)
+            login_user(user, remember=True)  # Enable remember me
             return redirect(url_for('dashboard'))
         
         flash('Invalid username or password')
