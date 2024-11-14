@@ -12,7 +12,7 @@ import re
 from datetime import timedelta
 
 # Initialize Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 CORS(app)
 
 # Configure Flask app

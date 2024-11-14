@@ -4,138 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - MissCall App</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
-        }
-
-        h1 {
-            text-align: center;
-            color: #1a73e8;
-            margin-bottom: 30px;
-            font-size: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: bold;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #1a73e8;
-        }
-
-        .button {
-            width: 100%;
-            padding: 12px;
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .button:hover {
-            background-color: #1557b0;
-        }
-
-        .alert {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            text-align: center;
-        }
-
-        .form-footer {
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-        }
-
-        .form-footer a {
-            color: #1a73e8;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .form-footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Phone number specific styling */
-        input[type="tel"] {
-            letter-spacing: 1px;
-        }
-
-        input[type="tel"]::placeholder {
-            letter-spacing: normal;
-        }
-
-        .password-requirements {
-            display: block;
-            color: #666;
-            font-size: 0.9em;
-            margin-top: 8px;
-        }
-
-        .password-requirements ul {
-            margin-left: 20px;
-            margin-top: 4px;
-        }
-
-        .password-requirements li {
-            margin-bottom: 2px;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Create Account</h1>
+    <div class="auth-container">
+        <h1 class="auth-title">Create Account</h1>
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert">{{ message }}</div>
+                    <div class="flash-message error">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
@@ -159,8 +37,8 @@
                     required 
                     placeholder="Choose a strong password"
                 >
-                <small class="password-requirements">
-                    Password must contain:
+                <div class="password-requirements">
+                    <p>Password must contain:</p>
                     <ul>
                         <li>At least 8 characters</li>
                         <li>At least one uppercase letter</li>
@@ -168,7 +46,7 @@
                         <li>At least one number</li>
                         <li>At least one special character (!@#$%^&*(),.?":{}|<>)</li>
                     </ul>
-                </small>
+                </div>
             </div>
             <div class="form-group">
                 <label for="phone_number">Phone Number</label>
@@ -182,9 +60,9 @@
                     required
                 >
             </div>
-            <button type="submit" class="button">Register</button>
+            <button type="submit" class="auth-btn">Register</button>
         </form>
-        <div class="form-footer">
+        <div class="auth-links">
             <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
         </div>
     </div>

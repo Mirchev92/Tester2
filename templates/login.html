@@ -4,143 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - MissCall App</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f2f5;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 500px;
-        }
-
-        h1 {
-            text-align: center;
-            color: #1a73e8;
-            margin-bottom: 30px;
-            font-size: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: bold;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #1a73e8;
-        }
-
-        .button {
-            width: 100%;
-            padding: 12px;
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .button:hover {
-            background-color: #1557b0;
-        }
-
-        .alert {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 12px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            text-align: center;
-        }
-
-        .form-footer {
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-        }
-
-        .form-footer a {
-            color: #1a73e8;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .form-footer a:hover {
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Login to MissCall App</h1>
+    <div class="auth-container">
+        <h1 class="auth-title">
+            Влезте в<br>
+            MissCall App
+        </h1>
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert">{{ message }}</div>
+                    <div class="flash-message error">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
         <form method="POST">
             <div class="form-group">
-                <label for="username">Username</label>
+                <label for="username">Потребителско име</label>
                 <input 
                     type="text" 
                     id="username" 
                     name="username" 
                     required 
-                    placeholder="Enter your username"
+                    placeholder="Въведете име"
                     autocomplete="username"
+                    oninvalid="this.setCustomValidity('Моля, въведете потребителско име')"
+                    oninput="this.setCustomValidity('')"
                 >
             </div>
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password">Парола</label>
                 <input 
                     type="password" 
                     id="password" 
                     name="password" 
                     required 
-                    placeholder="Enter your password"
+                    placeholder="Въведете парола"
                     autocomplete="current-password"
+                    oninvalid="this.setCustomValidity('Моля, въведете парола')"
+                    oninput="this.setCustomValidity('')"
                 >
             </div>
-            <button type="submit" class="button">Login</button>
+            <button type="submit" class="auth-btn">Login</button>
         </form>
-        <div class="form-footer">
-            <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+        <div class="auth-links">
+            <p>Нямате акаунт? <a href="{{ url_for('register') }}">Регистрирайте се тук</a></p>
         </div>
     </div>
 </body>
