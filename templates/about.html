@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>За нас - MissCall App</title>
+    <!-- Include FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Link to your CSS file -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Sidebar Menu -->
+    <div class="sidebar">
+        <div class="sidebar-content">
+            <a href="{{ url_for('dashboard') }}" class="sidebar-item">
+                <i class="fas fa-chart-line"></i>
+                Dashboard
+            </a>
+            <a href="{{ url_for('about') }}" class="sidebar-item active">
+                <i class="fas fa-info-circle"></i>
+                За нас
+            </a>
+            <a href="#" class="sidebar-item" onclick="showSettings()">
+                <i class="fas fa-cog"></i>
+                Настройки на SMS
+            </a>
+        </div>
+    </div>
+
+    <!-- Modal for Settings -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Настройки на SMS</h2>
+            <div class="settings-content">
+                <div class="sms-settings">
+                    <label for="smsText">SMS Съобщение:</label>
+                    <textarea id="smsText" rows="4">Здравейте, пропуснах обаждането ви. Ще се свържа с вас при първа възможност.</textarea>
+                    <button onclick="saveSmsText()" class="save-btn">Запази</button>
+                </div>
+                <div class="sms-toggle">
+                    <label>SMS Функция:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="smsToggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="navbar-container">
+                <div class="navbar-brand">
+                    <i class="fas fa-phone-missed"></i> MissCall App
+                </div>
+                <div class="user-profile">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span>{{ current_user.username }}</span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- About Content -->
+        <div class="container">
+            <div class="about-page">
+                <h1>За нас</h1>
+                <div class="about-section">
+                    <h2>Какво е MissCall?</h2>
+                    <p>MissCall е приложение, което автоматично изпраща SMS съобщения на пропуснати обаждания.</p>
+                    
+                    <h2>Как работи?</h2>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <i class="fas fa-phone-slash"></i>
+                            <h3>Засичане</h3>
+                            <p>Засича пропуснати обаждания автоматично</p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <i class="fas fa-paper-plane"></i>
+                            <h3>Изпращане</h3>
+                            <p>Автоматично изпраща персонализирано съобщение</p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <i class="fas fa-chart-bar"></i>
+                            <h3>Проследяване</h3>
+                            <p>Проследява статуса на изпратените съобщения</p>
+                        </div>
+                    </div>
+
+                    <h2>Предимства</h2>
+                    <ul class="benefits-list">
+                        <li><i class="fas fa-check"></i> Никога не пропускате важни обажданя</li>
+                        <li><i class="fas fa-check"></i> Професионално отношение към клиентите</li>
+                        <li><i class="fas fa-check"></i> Лесна настройка и управление</li>
+                        <li><i class="fas fa-check"></i> Персонализирани съобщения</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Settings modal functionality
+        function showSettings() {
+            // Load current settings when opening the modal
+            fetch('/api/get-settings')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('smsText').value = data.sms_text;
+                    document.getElementById('smsToggle').checked = data.sms_enabled;
+                });
+            document.getElementById('settingsModal').style.display = 'block';
+        }
+
+        // Close modal when clicking X or outside
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.onclick = function() {
+                this.closest('.modal').style.display = 'none';
+            }
+        });
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // SMS Toggle functionality
+        document.getElementById('smsToggle').addEventListener('change', function() {
+            fetch('/api/toggle-sms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    enabled: this.checked
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    this.checked = !this.checked;
+                }
+            });
+        });
+
+        function saveSmsText() {
+            const smsText = document.getElementById('smsText').value;
+            fetch('/api/update-sms-text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: smsText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('SMS текстът е запазен успешно!');
+                }
+            });
+        }
+    </script>
+</body>
+</html> 
