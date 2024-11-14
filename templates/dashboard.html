@@ -11,108 +11,164 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="navbar-container">
-            <div class="navbar-brand">
-                <i class="fas fa-phone-missed"></i> MissCall Dashboard
-            </div>
-            <div class="user-profile">
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span>{{ current_user.username }}</span>
-                </div>
-                <a href="{{ url_for('logout') }}" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </a>
+    <!-- Sidebar Menu -->
+    <div class="sidebar">
+        <div class="sidebar-content">
+            <a href="#" class="sidebar-item" onclick="showAboutUs()">
+                <i class="fas fa-info-circle"></i>
+                За нас
+            </a>
+            <a href="#" class="sidebar-item" onclick="showSettings()">
+                <i class="fas fa-cog"></i>
+                Настройки на SMS
+            </a>
+        </div>
+    </div>
+
+    <!-- Modal for About Us -->
+    <div id="aboutUsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>За нас</h2>
+            <div class="about-content">
+                <p>MissCall е приложение, което автоматично изпраща SMS съобщения на пропуснати обаждания.</p>
+                <p>Как работи:</p>
+                <ul>
+                    <li>Засича пропуснати обаждания</li>
+                    <li>Автоматично изпраща персонализирано съобщение</li>
+                    <li>Проследява статуса на изпратените съобщения</li>
+                </ul>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <!-- Main Content -->
-    <div class="container">
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-card-header">
-                    <span>Total Missed Calls</span>
-                    <i class="fas fa-phone-missed"></i>
+    <!-- Modal for Settings -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Настройки на SMS</h2>
+            <div class="settings-content">
+                <div class="sms-settings">
+                    <label for="smsText">SMS Съобщение:</label>
+                    <textarea id="smsText" rows="4">Здравейте, пропуснах обаждането ви. Ще се свържа с вас при първа възможност.</textarea>
+                    <button onclick="saveSmsText()" class="save-btn">Запази</button>
                 </div>
-                <div class="stat-card-value">{{ missed_calls|length }}</div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-card-header">
-                    <span>Messages Sent</span>
-                    <i class="fas fa-paper-plane"></i>
-                </div>
-                <div class="stat-card-value">
-                    {{ missed_calls|selectattr('message_sent')|list|length }}
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-card-header">
-                    <span>Response Rate</span>
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="stat-card-value">
-                    {% set response_rate = (missed_calls|selectattr('responded')|list|length / missed_calls|length * 100)|round(1) if missed_calls|length > 0 else 0 %}
-                    {{ response_rate }}%
+                <div class="sms-toggle">
+                    <label>SMS Функция:</label>
+                    <label class="switch">
+                        <input type="checkbox" id="smsToggle">
+                        <span class="slider round"></span>
+                    </label>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Missed Calls Table -->
-        <div class="calls-card">
-            <h2 class="card-title">Recent Missed Calls</h2>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Caller Number</th>
-                            <th>Message Status</th>
-                            <th>Response</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for call in missed_calls %}
-                        <tr>
-                            <td>
-                                <i class="far fa-clock"></i>
-                                {{ call.call_time.strftime('%Y-%m-%d %H:%M:%S') }}
-                            </td>
-                            <td>
-                                <i class="fas fa-phone"></i>
-                                {{ call.caller_number }}
-                            </td>
-                            <td>
-                                {% if call.message_sent %}
-                                <span class="status-badge success">
-                                    <i class="fas fa-check"></i> Sent
-                                </span>
-                                {% else %}
-                                <span class="status-badge error">
-                                    <i class="fas fa-times"></i> Failed
-                                </span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span class="status-badge {% if call.responded %}success{% else %}pending{% endif %}" id="status-{{ call.id }}">
-                                    <i class="fas {% if call.responded %}fa-reply{% else %}fa-clock{% endif %}"></i>
-                                    {% if call.responded %}Responded{% else %}Pending{% endif %}
-                                </span>
-                                <input type="checkbox" 
-                                       class="response-checkbox" 
-                                       data-call-id="{{ call.id }}" 
-                                       {% if call.responded %}checked{% endif %}
-                                       onchange="updateResponseStatus(this)">
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- Existing navbar and content with adjustment -->
+    <div class="main-content">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="navbar-container">
+                <div class="navbar-brand">
+                    <i class="fas fa-phone-missed"></i> MissCall Dashboard
+                </div>
+                <div class="user-profile">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span>{{ current_user.username }}</span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="container">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span>Total Missed Calls</span>
+                        <i class="fas fa-phone-missed"></i>
+                    </div>
+                    <div class="stat-card-value">{{ missed_calls|length }}</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span>Messages Sent</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <div class="stat-card-value">
+                        {{ missed_calls|selectattr('message_sent')|list|length }}
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span>Response Rate</span>
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-card-value">
+                        {% set response_rate = (missed_calls|selectattr('responded')|list|length / missed_calls|length * 100)|round(1) if missed_calls|length > 0 else 0 %}
+                        {{ response_rate }}%
+                    </div>
+                </div>
+            </div>
+
+            <!-- Missed Calls Table -->
+            <div class="calls-card">
+                <h2 class="card-title">Recent Missed Calls</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Caller Number</th>
+                                <th>Message Status</th>
+                                <th>Response</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for call in missed_calls %}
+                            <tr>
+                                <td>
+                                    <i class="far fa-clock"></i>
+                                    {{ call.call_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                                </td>
+                                <td>
+                                    <i class="fas fa-phone"></i>
+                                    {{ call.caller_number }}
+                                </td>
+                                <td>
+                                    {% if call.message_sent %}
+                                    <span class="status-badge success">
+                                        <i class="fas fa-check"></i> Sent
+                                    </span>
+                                    {% else %}
+                                    <span class="status-badge error">
+                                        <i class="fas fa-times"></i> Failed
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge {% if call.responded %}success{% else %}pending{% endif %}" id="status-{{ call.id }}">
+                                        <i class="fas {% if call.responded %}fa-reply{% else %}fa-clock{% endif %}"></i>
+                                        {% if call.responded %}Responded{% else %}Pending{% endif %}
+                                    </span>
+                                    <input type="checkbox" 
+                                           class="response-checkbox" 
+                                           data-call-id="{{ call.id }}" 
+                                           {% if call.responded %}checked{% endif %}
+                                           onchange="updateResponseStatus(this)">
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -149,6 +205,66 @@
             .catch(error => {
                 console.error('Error:', error);
                 checkbox.checked = !checkbox.checked; // Revert checkbox if error
+            });
+        }
+
+        // Modal functionality
+        function showAboutUs() {
+            document.getElementById('aboutUsModal').style.display = 'block';
+        }
+
+        function showSettings() {
+            document.getElementById('settingsModal').style.display = 'block';
+        }
+
+        // Close modal when clicking X or outside
+        document.querySelectorAll('.close-btn').forEach(btn => {
+            btn.onclick = function() {
+                this.closest('.modal').style.display = 'none';
+            }
+        });
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // SMS Toggle functionality
+        document.getElementById('smsToggle').addEventListener('change', function() {
+            fetch('/api/toggle-sms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    enabled: this.checked
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    this.checked = !this.checked;
+                }
+            });
+        });
+
+        function saveSmsText() {
+            const smsText = document.getElementById('smsText').value;
+            fetch('/api/update-sms-text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: smsText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('SMS текстът е запазен успешно!');
+                }
             });
         }
     </script>

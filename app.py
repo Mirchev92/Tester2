@@ -10,6 +10,14 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import re
 from datetime import timedelta
+import logging
+
+# Set up logging configuration
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__, static_folder='static')
