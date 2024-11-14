@@ -6,6 +6,7 @@
     <title>Dashboard - MissCall App</title>
     <!-- Include FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Link to your CSS file -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -62,15 +63,6 @@
             </div>
         </div>
 
-        <!-- Chart Card -->
-        <div class="chart-card">
-            <h2 class="card-title">Weekly Activity</h2>
-            <div class="chart-container">
-                <!-- We'll add a simple canvas here. For actual charts, you might want to use Chart.js -->
-                <canvas id="weeklyChart"></canvas>
-            </div>
-        </div>
-
         <!-- Missed Calls Table -->
         <div class="calls-card">
             <h2 class="card-title">Recent Missed Calls</h2>
@@ -107,15 +99,15 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {% if call.responded %}
-                                <span class="status-badge success">
-                                    <i class="fas fa-reply"></i> Responded
+                                <span class="status-badge {% if call.responded %}success{% else %}pending{% endif %}" id="status-{{ call.id }}">
+                                    <i class="fas {% if call.responded %}fa-reply{% else %}fa-clock{% endif %}"></i>
+                                    {% if call.responded %}Responded{% else %}Pending{% endif %}
                                 </span>
-                                {% else %}
-                                <span class="status-badge pending">
-                                    <i class="fas fa-clock"></i> Pending
-                                </span>
-                                {% endif %}
+                                <input type="checkbox" 
+                                       class="response-checkbox" 
+                                       data-call-id="{{ call.id }}" 
+                                       {% if call.responded %}checked{% endif %}
+                                       onchange="updateResponseStatus(this)">
                             </td>
                         </tr>
                         {% endfor %}
@@ -125,41 +117,40 @@
         </div>
     </div>
 
-    <!-- Add Chart.js for the weekly activity chart -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
     <script>
-        // Sample data for the weekly chart
-        const ctx = document.getElementById('weeklyChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{
-                    label: 'Missed Calls',
-                    data: [4, 3, 6, 2, 5, 1, 3],
-                    borderColor: '#1a73e8',
-                    tension: 0.4,
-                    fill: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+        function updateResponseStatus(checkbox) {
+            const callId = checkbox.dataset.callId;
+            const statusSpan = document.getElementById(`status-${callId}`);
+            
+            fetch('/api/update-response', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
+                body: JSON.stringify({
+                    call_id: callId,
+                    responded: checkbox.checked
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update the status badge
+                    statusSpan.className = `status-badge ${checkbox.checked ? 'success' : 'pending'}`;
+                    statusSpan.innerHTML = checkbox.checked ? 
+                        '<i class="fas fa-reply"></i> Responded' : 
+                        '<i class="fas fa-clock"></i> Pending';
+                    
+                    // Update the response rate
+                    const responseRateElement = document.querySelector('.stat-card:nth-child(3) .stat-card-value');
+                    responseRateElement.textContent = data.new_response_rate + '%';
                 }
-            }
-        });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                checkbox.checked = !checkbox.checked; // Revert checkbox if error
+            });
+        }
     </script>
 </body>
 </html>

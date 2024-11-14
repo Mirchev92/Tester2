@@ -130,42 +130,31 @@ th {
 }
 
 .status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 5px;
+}
+
+.status-badge i {
+    font-size: 0.9rem;
 }
 
 .status-badge.success {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: #e6f4ea;
+    color: #1e7e34;
 }
 
 .status-badge.error {
-    background-color: #fee2e2;
-    color: #991b1b;
+    background-color: #fde7e9;
+    color: #dc3545;
 }
 
 .status-badge.pending {
-    background-color: #ffffff;
-    color: #374151;
-}
-
-/* Chart Container */
-.chart-card {
-    background: rgb(255, 255, 255);
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 2rem;
-}
-
-.chart-container {
-    height: 300px;
-    margin-top: 1rem;
+    background-color: #fff3cd;
+    color: #856404;
 }
 
 /* Responsive Design */
@@ -324,4 +313,18 @@ th {
     align-items: center;
     gap: 0.5rem;
     margin: 0.5rem 0;
+}
+
+/* Checkbox styling */
+.response-checkbox {
+    margin-right: 10px;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+}
+
+/* Table cell alignment */
+td {
+    vertical-align: middle !important;
 }

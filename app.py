@@ -297,6 +297,36 @@ def list_calls():
         })
     return jsonify(calls_list)
 
+@app.route('/api/update-response', methods=['POST'])
+@login_required
+def update_response():
+    try:
+        data = request.json
+        call_id = data.get('call_id')
+        responded = data.get('responded', False)
+        
+        # Get the call and verify it belongs to the current user
+        call = MissedCall.query.filter_by(id=call_id, user_id=current_user.id).first()
+        if not call:
+            return jsonify({'status': 'error', 'message': 'Call not found'}), 404
+        
+        # Update the response status
+        call.responded = responded
+        db.session.commit()
+        
+        # Calculate new response rate
+        total_calls = MissedCall.query.filter_by(user_id=current_user.id).count()
+        responded_calls = MissedCall.query.filter_by(user_id=current_user.id, responded=True).count()
+        new_response_rate = round((responded_calls / total_calls * 100), 1) if total_calls > 0 else 0
+        
+        return jsonify({
+            'status': 'success',
+            'new_response_rate': new_response_rate
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
