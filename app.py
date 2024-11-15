@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -35,6 +36,7 @@ app.config['SINCH_SENDER'] = 'MissCall'
 
 # Initialize extensions
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)  # Add this line
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
@@ -60,6 +62,18 @@ class MissedCall(db.Model):
     caller_number = db.Column(db.String(15), nullable=False)
     responded = db.Column(db.Boolean, default=False)
     message_sent = db.Column(db.String(160))
+
+class Customer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    phone_number = db.Column(db.String(15), nullable=False)
+    name = db.Column(db.String(100))
+    location = db.Column(db.String(200))
+    last_job = db.Column(db.String(500))
+    status = db.Column(db.String(50))
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -175,10 +189,15 @@ def login():
         flash('Invalid username or password')
     return render_template('login.html')
 
+def is_saved_customer(phone_number):
+    return Customer.query.filter_by(phone_number=phone_number).first() is not None
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
     missed_calls = MissedCall.query.filter_by(user_id=current_user.id).order_by(MissedCall.call_time.desc()).all()
+    for call in missed_calls:
+        call.is_saved_customer = is_saved_customer(call.caller_number)
     return render_template('dashboard.html', missed_calls=missed_calls)
 
 @app.route('/logout')
@@ -340,7 +359,87 @@ def update_response():
 def about():
     return render_template('about.html')
 
+@app.route('/customers')
+@login_required
+def customers():
+    print("Accessing customers route")  # Debug print
+    try:
+        customers = Customer.query.filter_by(user_id=current_user.id).order_by(Customer.last_updated.desc()).all()
+        print(f"Found {len(customers)} customers")  # Debug print
+        return render_template('customerinfo.html', customers=customers)
+    except Exception as e:
+        print(f"Error in customers route: {str(e)}")
+        return str(e), 500
+
+@app.route('/api/add-customer', methods=['POST'])
+@login_required
+def add_customer():
+    try:
+        data = request.json
+        customer = Customer(
+            user_id=current_user.id,
+            phone_number=data['phone_number'],
+            name=data.get('name', ''),
+            location=data.get('location', ''),
+            last_job=data.get('last_job', ''),
+            status=data.get('status', 'New'),
+            notes=data.get('notes', '')
+        )
+        db.session.add(customer)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Customer added successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/update-customer/<int:customer_id>', methods=['POST'])
+@login_required
+def update_customer(customer_id):
+    try:
+        customer = Customer.query.filter_by(id=customer_id, user_id=current_user.id).first()
+        if not customer:
+            return jsonify({'success': False, 'error': 'Customer not found'}), 404
+
+        data = request.json
+        customer.name = data.get('name', customer.name)
+        customer.location = data.get('location', customer.location)
+        customer.last_job = data.get('last_job', customer.last_job)
+        customer.status = data.get('status', customer.status)
+        customer.notes = data.get('notes', customer.notes)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Customer updated successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/customer/<int:customer_id>')
+@login_required
+def get_customer(customer_id):
+    try:
+        customer = Customer.query.filter_by(
+            id=customer_id,
+            user_id=current_user.id
+        ).first()
+        
+        if not customer:
+            return jsonify({'error': 'Customer not found'}), 404
+            
+        return jsonify({
+            'id': customer.id,
+            'phone_number': customer.phone_number,
+            'name': customer.name,
+            'location': customer.location,
+            'last_job': customer.last_job,
+            'status': customer.status,
+            'notes': customer.notes
+        })
+    except Exception as e:
+        print(f"Error in get_customer: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+    print("\nRegistered Routes:")
+    for rule in app.url_map.iter_rules():
+        print(f"{rule.endpoint}: {rule.rule}")
     app.run(debug=True)

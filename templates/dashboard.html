@@ -14,17 +14,17 @@
     <!-- Sidebar Menu -->
     <div class="sidebar">
         <div class="sidebar-content">
-            <a href="{{ url_for('dashboard') }}" class="sidebar-item active">
+            <a href="{{ url_for('dashboard') }}" class="sidebar-item">
                 <i class="fas fa-chart-line"></i>
                 Dashboard
+            </a>
+            <a href="/customers" class="sidebar-item">
+                <i class="fas fa-users"></i>
+                Customers
             </a>
             <a href="{{ url_for('about') }}" class="sidebar-item">
                 <i class="fas fa-info-circle"></i>
                 За нас
-            </a>
-            <a href="#" class="sidebar-item" onclick="showSettings()">
-                <i class="fas fa-cog"></i>
-                Настройки на SMS
             </a>
         </div>
     </div>
@@ -116,6 +116,7 @@
                                 <th>Caller Number</th>
                                 <th>Message Status</th>
                                 <th>Response</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -150,6 +151,13 @@
                                            data-call-id="{{ call.id }}" 
                                            {% if call.responded %}checked{% endif %}
                                            onchange="updateResponseStatus(this)">
+                                </td>
+                                <td>
+                                    {% if not call.is_saved_customer %}
+                                    <button onclick="saveAsCustomer('{{ call.caller_number }}')" class="action-btn">
+                                        <i class="fas fa-user-plus"></i> Save as Customer
+                                    </button>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -247,6 +255,28 @@
             .then(data => {
                 if (data.success) {
                     alert('SMS текстът е запазен успешно!');
+                }
+            });
+        }
+
+        function saveAsCustomer(phoneNumber) {
+            fetch('/api/add-customer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phone_number: phoneNumber,
+                    status: 'New'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Customer saved successfully!');
+                    window.location.href = '/customers';  // Redirect to customer page
+                } else {
+                    alert(data.error || 'Failed to save customer');
                 }
             });
         }

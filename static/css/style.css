@@ -546,3 +546,170 @@ input:checked + .slider:before {
 .sidebar-item.active {
     background-color: #5b4ac4;
 }
+
+/* Customer Info Page Styles */
+.customer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.search-bar {
+    display: flex;
+    gap: 1rem;
+    flex: 1;
+    max-width: 500px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.search-bar button {
+    padding: 0.5rem 1rem;
+    background-color: #7360f2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.add-customer-btn {
+    padding: 0.5rem 1rem;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.customers-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.customer-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.customer-status.regular {
+    background-color: #e6f4ea;
+    color: #1e7e34;
+}
+
+.customer-status.new {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.customer-status.vip {
+    background-color: #cfe2ff;
+    color: #0d6efd;
+}
+
+.action-btn {
+    padding: 6px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0 2px;
+}
+
+.action-btn.edit {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.action-btn.delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Form styles for customer modal */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Customer table styles */
+.customers-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 20px;
+    padding: 20px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.add-btn {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.9em;
+}
+
+.status-badge.new { background: #FFE0B2; color: #E65100; }
+.status-badge.regular { background: #C8E6C9; color: #2E7D32; }
+.status-badge.vip { background: #E1BEE7; color: #6A1B9A; }
+
+/* Form styles */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-group textarea {
+    height: 100px;
+}

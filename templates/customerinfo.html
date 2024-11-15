@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Information - MissCall App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Sidebar (same as dashboard) -->
+    <div class="sidebar">
+        <div class="sidebar-content">
+            <a href="{{ url_for('dashboard') }}" class="sidebar-item">
+                <i class="fas fa-chart-line"></i>
+                Dashboard
+            </a>
+            <a href="{{ url_for('customers') }}" class="sidebar-item active">
+                <i class="fas fa-users"></i>
+                Customers
+            </a>
+            <a href="{{ url_for('about') }}" class="sidebar-item">
+                <i class="fas fa-info-circle"></i>
+                За нас
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- Navigation Bar (similar to dashboard) -->
+        <nav class="navbar">
+            <div class="navbar-container">
+                <div class="navbar-brand">
+                    <i class="fas fa-users"></i> Customer Information
+                </div>
+                <div class="user-profile">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span>{{ current_user.username }}</span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <!-- Customer List -->
+            <div class="customers-card">
+                <div class="card-header">
+                    <h2>Customer List</h2>
+                    <button onclick="showAddCustomerModal()" class="add-btn">
+                        <i class="fas fa-plus"></i> Add Customer
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone Number</th>
+                                <th>Location</th>
+                                <th>Last Job</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in customers %}
+                            <tr>
+                                <td>{{ customer.name or 'N/A' }}</td>
+                                <td>{{ customer.phone_number }}</td>
+                                <td>{{ customer.location or 'N/A' }}</td>
+                                <td>{{ customer.last_job or 'N/A' }}</td>
+                                <td>
+                                    <span class="status-badge {{ customer.status.lower() }}">
+                                        {{ customer.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="editCustomer('{{ customer.id }}')" class="action-btn">
+
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Customer Modal -->
+    <div id="customerModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="modalTitle">Add Customer</h2>
+            <form id="customerForm">
+                <input type="hidden" id="customerId">
+                <div class="form-group">
+                    <label for="phone">Phone Number:</label>
+                    <input type="text" id="phone" required>
+                </div>
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name">
+                </div>
+                <div class="form-group">
+                    <label for="location">Location:</label>
+                    <input type="text" id="location">
+                </div>
+                <div class="form-group">
+                    <label for="lastJob">Last Job:</label>
+                    <textarea id="lastJob"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status:</label>
+                    <select id="status">
+                        <option value="New">New</option>
+                        <option value="Regular">Regular</option>
+                        <option value="VIP">VIP</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Notes:</label>
+                    <textarea id="notes"></textarea>
+                </div>
+                <button type="submit" class="save-btn">Save Customer</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Modal functionality
+        const modal = document.getElementById('customerModal');
+        const closeBtn = document.querySelector('.close-btn');
+        const customerForm = document.getElementById('customerForm');
+
+        function showAddCustomerModal() {
+            document.getElementById('modalTitle').textContent = 'Add Customer';
+            customerForm.reset();
+            modal.style.display = 'block';
+        }
+
+        function editCustomer(customerId) {
+            console.log('Attempting to fetch customer:', customerId); // Debug log
+            
+            fetch(`/api/customer/${customerId}`)
+                .then(response => {
+                    console.log('Response status:', response.status); // Debug log
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Received data:', data); // Debug log
+                    document.getElementById('customerId').value = customerId;
+                    document.getElementById('phone').value = data.phone_number || '';
+                    document.getElementById('name').value = data.name || '';
+                    document.getElementById('location').value = data.location || '';
+                    document.getElementById('lastJob').value = data.last_job || '';
+                    document.getElementById('status').value = data.status || 'New';
+                    document.getElementById('notes').value = data.notes || '';
+                    modal.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Detailed error:', error); // More detailed error logging
+                    alert('Error fetching customer data: ' + error.message);
+                });
+        }
+
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        customerForm.onsubmit = function(e) {
+            e.preventDefault();
+            const customerId = document.getElementById('customerId').value;
+            const data = {
+                phone_number: document.getElementById('phone').value,
+                name: document.getElementById('name').value,
+                location: document.getElementById('location').value,
+                last_job: document.getElementById('lastJob').value,
+                status: document.getElementById('status').value,
+                notes: document.getElementById('notes').value
+            };
+
+            const url = customerId ? 
+                `/api/update-customer/${customerId}` : 
+                '/api/add-customer';
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'An error occurred');
+                }
+            });
+        };
+    </script>
+</body>
+</html> 
