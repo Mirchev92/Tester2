@@ -19,6 +19,10 @@
                 <i class="fas fa-users"></i>
                 Customers
             </a>
+            <a href="{{ url_for('sms_settings') }}" class="sidebar-item">
+                <i class="fas fa-sms"></i>
+                SMS Настройки
+            </a>
             <a href="{{ url_for('about') }}" class="sidebar-item">
                 <i class="fas fa-info-circle"></i>
                 За нас
@@ -68,7 +72,7 @@
                         </thead>
                         <tbody>
                             {% for customer in customers %}
-                            <tr>
+                            <tr data-customer-id="{{ customer.id }}">
                                 <td>{{ customer.name or 'N/A' }}</td>
                                 <td>{{ customer.phone_number }}</td>
                                 <td>{{ customer.location or 'N/A' }}</td>
@@ -79,10 +83,14 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <button onclick="editCustomer('{{ customer.id }}')" class="action-btn">
-
-                                        <i class="fas fa-edit"></i>
-                                    </button>
+                                    <div class="action-buttons">
+                                        <button onclick="editCustomer('{{ customer.id }}')" class="action-btn edit">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="deleteCustomer('{{ customer.id }}')" class="action-btn delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -215,6 +223,41 @@
                 }
             });
         };
+
+        function deleteCustomer(customerId) {
+            if (confirm('Are you sure you want to delete this customer?')) {
+                fetch(`/api/customer/${customerId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => Promise.reject(err));
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // Remove the row from the table
+                        const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+                        if (row) {
+                            row.remove();
+                        }
+                        // Optionally reload the page
+                        window.location.reload();
+                    } else {
+                        alert(data.error || 'Error deleting customer');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while deleting the customer');
+                });
+            }
+        }
     </script>
 </body>
 </html> 

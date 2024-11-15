@@ -1,10 +1,28 @@
 from app import db
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
     password = db.Column(db.String(50), nullable=False)
     phone_number = db.Column(db.String(15), nullable=False)
+    
+    # SMS Settings
+    sms_enabled = db.Column(db.Boolean, default=False)
+    working_hours_start = db.Column(db.String(5), default='09:00')
+    working_hours_end = db.Column(db.String(5), default='18:00')
+    working_days = db.Column(db.String(100), default='Monday,Tuesday,Wednesday,Thursday,Friday')
+    off_hours_message = db.Column(db.Text)
+    vacation_mode = db.Column(db.Boolean, default=False)
+    vacation_message = db.Column(db.Text)
+    
+    # SMS Templates
+    confirmation_template = db.Column(db.Text)
+    followup_template = db.Column(db.Text)
+    
+    # Notification Settings
+    notifications_enabled = db.Column(db.Boolean, default=False)
+    notification_phone = db.Column(db.String(20))
 
 class MissedCall(db.Model):
     id = db.Column(db.Integer, primary_key=True)

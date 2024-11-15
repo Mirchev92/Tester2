@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -54,6 +54,13 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(256), nullable=False)
     phone_number = db.Column(db.String(15), nullable=False)
     missed_calls = db.relationship('MissedCall', backref='user', lazy=True)
+    sms_enabled = db.Column(db.Boolean, default=True)
+    vacation_mode = db.Column(db.Boolean, default=False)
+    working_hours_start = db.Column(db.String(5), default='09:00')
+    working_hours_end = db.Column(db.String(5), default='18:00')
+    working_days = db.Column(db.String(100), default='Monday,Tuesday,Wednesday,Thursday,Friday')
+    off_hours_message = db.Column(db.Text)
+    vacation_message = db.Column(db.Text)
 
 class MissedCall(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -410,50 +417,133 @@ def add_customer():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
-@app.route('/api/update-customer/<int:customer_id>', methods=['POST'])
+@app.route('/api/customer/<int:customer_id>', methods=['GET', 'PUT', 'DELETE'])
 @login_required
-def update_customer(customer_id):
-    try:
-        customer = Customer.query.filter_by(id=customer_id, user_id=current_user.id).first()
-        if not customer:
-            return jsonify({'success': False, 'error': 'Customer not found'}), 404
-
-        data = request.json
-        customer.name = data.get('name', customer.name)
-        customer.location = data.get('location', customer.location)
-        customer.last_job = data.get('last_job', customer.last_job)
-        customer.status = data.get('status', customer.status)
-        customer.notes = data.get('notes', customer.notes)
-        
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'Customer updated successfully'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 400
-
-@app.route('/api/customer/<int:customer_id>')
-@login_required
-def get_customer(customer_id):
-    try:
-        customer = Customer.query.filter_by(
-            id=customer_id,
-            user_id=current_user.id
-        ).first()
-        
-        if not customer:
-            return jsonify({'error': 'Customer not found'}), 404
+def handle_customer(customer_id):
+    print(f"Handling {request.method} request for customer {customer_id}")  # Debug print
+    
+    if request.method == 'GET':
+        try:
+            customer = Customer.query.filter_by(
+                id=customer_id,
+                user_id=current_user.id
+            ).first()
             
-        return jsonify({
-            'id': customer.id,
-            'phone_number': customer.phone_number,
-            'name': customer.name,
-            'location': customer.location,
-            'last_job': customer.last_job,
-            'status': customer.status,
-            'notes': customer.notes
-        })
-    except Exception as e:
-        print(f"Error in get_customer: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+            if not customer:
+                return jsonify({'error': 'Customer not found'}), 404
+                
+            return jsonify({
+                'id': customer.id,
+                'phone_number': customer.phone_number,
+                'name': customer.name,
+                'location': customer.location,
+                'last_job': customer.last_job,
+                'status': customer.status,
+                'notes': customer.notes
+            })
+        except Exception as e:
+            print(f"Error in GET: {str(e)}")
+            return jsonify({'error': str(e)}), 500
+            
+    elif request.method == 'PUT':
+        try:
+            customer = Customer.query.filter_by(
+                id=customer_id,
+                user_id=current_user.id
+            ).first()
+            
+            if not customer:
+                return jsonify({'success': False, 'error': 'Customer not found'}), 404
+
+            data = request.json
+            customer.name = data.get('name', customer.name)
+            customer.location = data.get('location', customer.location)
+            customer.last_job = data.get('last_job', customer.last_job)
+            customer.status = data.get('status', customer.status)
+            customer.notes = data.get('notes', customer.notes)
+            
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Customer updated successfully'})
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in PUT: {str(e)}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+            
+    elif request.method == 'DELETE':
+        try:
+            print(f"Processing DELETE request for customer {customer_id}")  # Debug print
+            
+            customer = Customer.query.filter_by(
+                id=customer_id,
+                user_id=current_user.id
+            ).first()
+            
+            if not customer:
+                print(f"Customer {customer_id} not found")
+                return jsonify({'success': False, 'error': 'Customer not found'}), 404
+
+            print(f"Found customer {customer_id}, attempting delete")  # Debug print
+            
+            db.session.delete(customer)
+            db.session.commit()
+            
+            print(f"Successfully deleted customer {customer_id}")  # Debug print
+            
+            return jsonify({
+                'success': True,
+                'message': 'Customer deleted successfully'
+            })
+            
+        except Exception as e:
+            db.session.rollback()
+            error_msg = f"Error deleting customer {customer_id}: {str(e)}"
+            print(error_msg)  # Debug print
+            return jsonify({
+                'success': False,
+                'error': error_msg
+            }), 500
+
+    return jsonify({'error': 'Method not allowed'}), 405
+
+@app.route('/sms-settings', methods=['GET', 'POST'])
+@login_required
+def sms_settings():
+    if request.method == 'POST':
+        try:
+            # Update SMS settings
+            current_user.sms_enabled = 'sms_enabled' in request.form
+            current_user.working_hours_start = request.form.get('working_hours_start')
+            current_user.working_hours_end = request.form.get('working_hours_end')
+            
+            # Handle working days
+            working_days = request.form.getlist('working_days')
+            current_user.working_days = ','.join(working_days)
+            
+            # Update messages
+            current_user.off_hours_message = request.form.get('off_hours_message')
+            current_user.vacation_mode = 'vacation_mode' in request.form
+            current_user.vacation_message = request.form.get('vacation_message')
+            
+            # Update templates
+            current_user.confirmation_template = request.form.get('confirmation_template')
+            current_user.followup_template = request.form.get('followup_template')
+            
+            # Update notification settings
+            current_user.notifications_enabled = 'notifications_enabled' in request.form
+            current_user.notification_phone = request.form.get('notification_phone')
+            
+            # Save changes
+            db.session.commit()
+            flash('SMS настройките са запазени успешно!', 'success')
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('Възникна грешка при запазване на настройките.', 'error')
+            print(f"Error saving SMS settings: {str(e)}")
+            
+        return redirect(url_for('sms_settings'))
+    
+    return render_template('sms-settings.html')
 
 if __name__ == '__main__':
     with app.app_context():

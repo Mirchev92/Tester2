@@ -18,13 +18,17 @@
                 <i class="fas fa-chart-line"></i>
                 Dashboard
             </a>
+            <a href="{{ url_for('customers') }}" class="sidebar-item">
+                <i class="fas fa-users"></i>
+                Customers
+            </a>
+            <a href="{{ url_for('sms_settings') }}" class="sidebar-item">
+                <i class="fas fa-sms"></i>
+                SMS Настройки
+            </a>
             <a href="{{ url_for('about') }}" class="sidebar-item active">
                 <i class="fas fa-info-circle"></i>
                 За нас
-            </a>
-            <a href="#" class="sidebar-item" onclick="showSettings()">
-                <i class="fas fa-cog"></i>
-                Настройки на SMS
             </a>
         </div>
     </div>
