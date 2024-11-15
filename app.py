@@ -193,12 +193,31 @@ def is_saved_customer(phone_number):
     return Customer.query.filter_by(phone_number=phone_number).first() is not None
 
 @app.route('/dashboard')
-@login_required
 def dashboard():
-    missed_calls = MissedCall.query.filter_by(user_id=current_user.id).order_by(MissedCall.call_time.desc()).all()
-    for call in missed_calls:
-        call.is_saved_customer = is_saved_customer(call.caller_number)
-    return render_template('dashboard.html', missed_calls=missed_calls)
+    # Assuming you have SQLAlchemy models for MissedCall and Customer
+    missed_calls = db.session.query(
+        MissedCall, 
+        Customer.name.label('customer_name')
+    ).outerjoin(
+        Customer, 
+        MissedCall.caller_number == Customer.phone_number
+    ).all()
+    
+    # Format the results
+    formatted_calls = []
+    for call, customer_name in missed_calls:
+        call_dict = {
+            'id': call.id,
+            'call_time': call.call_time,
+            'caller_number': call.caller_number,
+            'message_sent': call.message_sent,
+            'responded': call.responded,
+            'is_saved_customer': customer_name is not None,
+            'customer_name': customer_name
+        }
+        formatted_calls.append(call_dict)
+
+    return render_template('dashboard.html', missed_calls=formatted_calls)
 
 @app.route('/logout')
 @login_required
