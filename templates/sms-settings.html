@@ -1,75 +1,107 @@
 {% extends "dashboard.html" %}
-{% block content %}
-<div class="container">
-    <div class="sms-settings-container">
-        <h1>SMS Настройки</h1>
 
-        <form method="POST" class="sms-settings-form">
-            <!-- Working Hours Section -->
-            <div class="settings-section">
-                <h2>Работно време</h2>
-                <div class="setting-item">
-                    <div class="time-inputs">
-                        <div class="time-field">
-                            <label>Начало на работния ден:</label>
-                            <input type="time" name="working_hours_start" 
-                                   value="{{ current_user.working_hours_start or '09:00' }}">
+{% block dashboard_content %}
+<div class="settings-container">
+    <div class="settings-section">
+        <h2>SMS Настройки</h2>
+        <div class="settings-content">
+            <form method="POST" class="sms-settings-form">
+                <!-- SMS Toggle Section -->
+                <div class="setting-block">
+                    <div class="setting-header" onclick="toggleSection('sms-section')">
+                        <h3>Автоматични SMS-и</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="setting-content" id="sms-section">
+                        <div class="setting-item">
+                            <div class="toggle-wrapper">
+                                <span class="toggle-label">Активиране на автоматични SMS-и</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="sms_enabled" 
+                                           {% if current_user.sms_enabled %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="template-container">
+                                <label>Шаблон на съобщението:</label>
+                                <textarea name="sms_template" rows="3">{{ current_user.sms_template }}</textarea>
+                            </div>
                         </div>
-                        <div class="time-field">
-                            <label>Край на работния ден:</label>
-                            <input type="time" name="working_hours_end" 
-                                   value="{{ current_user.working_hours_end or '18:00' }}">
+                    </div>
+                </div>
+
+                <!-- Working Hours Section -->
+                <div class="setting-block">
+                    <div class="setting-header" onclick="toggleSection('hours-section')">
+                        <h3>Работно време</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="setting-content" id="hours-section">
+                        <div class="setting-item">
+                            <div class="time-inputs">
+                                <div class="time-field">
+                                    <label>Начало на работния ден:</label>
+                                    <input type="time" name="work_start" value="{{ current_user.work_start }}">
+                                </div>
+                                <div class="time-field">
+                                    <label>Край на работния ден:</label>
+                                    <input type="time" name="work_end" value="{{ current_user.work_end }}">
+                                </div>
+                            </div>
+                            <div class="working-days">
+                                <label>Работни дни:</label>
+                                <div class="days-grid">
+                                    {% for day in ['Пон', 'Вт', 'Ср', 'Чет', 'Пет', 'Съб', 'Нед'] %}
+                                    <div class="day-checkbox">
+                                        <input type="checkbox" name="work_days" value="{{ loop.index0 }}"
+                                               {% if loop.index0 in current_user.work_days %}checked{% endif %}>
+                                        <span>{{ day }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="template-container">
+                                <label>Съобщение извън работно време:</label>
+                                <textarea name="off_hours_message" rows="3">{{ current_user.off_hours_message }}</textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Working Days -->
-                <div class="setting-item">
-                    <label>Работни дни:</label>
-                    <div class="days-grid">
-                        {% set days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
-                        {% set day_names = ['Пон', 'Вт', 'Ср', 'Чет', 'Пет', 'Съб', 'Нед'] %}
-                        {% for i in range(days|length) %}
-                            <label class="day-checkbox">
-                                <input type="checkbox" name="working_days" value="{{ days[i] }}"
-                                       {% if days[i] in current_user.working_days|default('')|split(',') %}checked{% endif %}>
-                                <span>{{ day_names[i] }}</span>
-                            </label>
-                        {% endfor %}
+                <!-- Vacation Mode Section -->
+                <div class="setting-block">
+                    <div class="setting-header" onclick="toggleSection('vacation-section')">
+                        <h3>Режим "Отпуск"</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="setting-content" id="vacation-section">
+                        <div class="setting-item">
+                            <div class="toggle-wrapper">
+                                <span class="toggle-label">Активиране на режим "Отпуск"</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="vacation_mode" 
+                                           {% if current_user.vacation_mode %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="template-container">
+                                <label>Съобщение за отпуск:</label>
+                                <textarea name="vacation_message" rows="3">{{ current_user.vacation_message }}</textarea>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Off-hours Message -->
-                <div class="setting-item">
-                    <label>Съобщение извън работно време:</label>
-                    <textarea name="off_hours_message" rows="3">{{ current_user.off_hours_message or 'Здравейте, в момента сме извън работно време. Ще се свържем с вас през работния ден.' }}</textarea>
-                </div>
-            </div>
-
-            <!-- Vacation Mode Section -->
-            <div class="settings-section">
-                <h2>Режим "Отпуск"</h2>
-                <div class="setting-item">
-                    <div class="vacation-toggle">
-                        <label>Активиране на режим "Отпуск"</label>
-                        <label class="switch">
-                            <input type="checkbox" name="vacation_mode" 
-                                   {% if current_user.vacation_mode %}checked{% endif %}>
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </div>
-                <div class="setting-item">
-                    <label>Съобщение за отпуск:</label>
-                    <textarea name="vacation_message" rows="3">{{ current_user.vacation_message or 'Здравейте, в момента съм в отпуск. Ще се свържа с вас след завръщането си.' }}</textarea>
-                </div>
-            </div>
-
-            <button type="submit" class="save-btn">
-                <i class="fas fa-save"></i>
-                Запази настройките
-            </button>
-        </form>
+                <button type="submit" class="save-btn">
+                    <i class="fas fa-save"></i>
+                    Запази настройките
+                </button>
+            </form>
+        </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='css/js/toggle_SMS_Settings.js') }}"></script>
+{% endblock %}

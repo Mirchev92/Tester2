@@ -55,12 +55,13 @@ class User(UserMixin, db.Model):
     phone_number = db.Column(db.String(15), nullable=False)
     missed_calls = db.relationship('MissedCall', backref='user', lazy=True)
     sms_enabled = db.Column(db.Boolean, default=True)
-    vacation_mode = db.Column(db.Boolean, default=False)
+    sms_template = db.Column(db.Text, default='Здравейте, пропуснах обаждането ви. Ще се свържа с вас при първа възможност.')
     working_hours_start = db.Column(db.String(5), default='09:00')
     working_hours_end = db.Column(db.String(5), default='18:00')
     working_days = db.Column(db.String(100), default='Monday,Tuesday,Wednesday,Thursday,Friday')
-    off_hours_message = db.Column(db.Text)
-    vacation_message = db.Column(db.Text)
+    off_hours_message = db.Column(db.Text, default='Здравейте, в момента сме извън работно време. Ще се свържем с вас през работния ден.')
+    vacation_mode = db.Column(db.Boolean, default=False)
+    vacation_message = db.Column(db.Text, default='Здравейте, в момента съм в отпуск. Ще се свържа с вас след завръщането си.')
 
 class MissedCall(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -86,7 +87,30 @@ class Customer(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-def send_sinch_sms(phone_number, message):
+def send_sinch_sms(phone_number, message_type='default'):
+    user = current_user
+    
+    # Check if SMS is enabled
+    if not user.sms_enabled:
+        return False, "SMS service is disabled"
+        
+    # Check vacation mode
+    if user.vacation_mode:
+        message = user.vacation_message
+    else:
+        # Check working hours and days
+        now = datetime.now()
+        current_time = now.strftime("%H:%M")
+        current_day = now.strftime("%A")
+        
+        if (current_day not in user.working_days.split(',') or 
+            current_time < user.working_hours_start or 
+            current_time > user.working_hours_end):
+            message = user.off_hours_message
+        else:
+            message = user.sms_template
+    
+    # Send the SMS using Sinch
     try:
         # Format phone number (remove + if present and ensure it starts with 359)
         formatted_phone = phone_number.replace('+', '')
@@ -512,34 +536,27 @@ def sms_settings():
         try:
             # Update SMS settings
             current_user.sms_enabled = 'sms_enabled' in request.form
-            current_user.working_hours_start = request.form.get('working_hours_start')
-            current_user.working_hours_end = request.form.get('working_hours_end')
+            current_user.sms_template = request.form.get('sms_template', '')
             
-            # Handle working days
+            # Update working hours
+            current_user.working_hours_start = request.form.get('working_hours_start', '09:00')
+            current_user.working_hours_end = request.form.get('working_hours_end', '18:00')
+            
+            # Update working days
             working_days = request.form.getlist('working_days')
-            current_user.working_days = ','.join(working_days)
+            current_user.working_days = ','.join(working_days) if working_days else 'Monday,Tuesday,Wednesday,Thursday,Friday'
             
             # Update messages
-            current_user.off_hours_message = request.form.get('off_hours_message')
+            current_user.off_hours_message = request.form.get('off_hours_message', '')
             current_user.vacation_mode = 'vacation_mode' in request.form
-            current_user.vacation_message = request.form.get('vacation_message')
+            current_user.vacation_message = request.form.get('vacation_message', '')
             
-            # Update templates
-            current_user.confirmation_template = request.form.get('confirmation_template')
-            current_user.followup_template = request.form.get('followup_template')
-            
-            # Update notification settings
-            current_user.notifications_enabled = 'notifications_enabled' in request.form
-            current_user.notification_phone = request.form.get('notification_phone')
-            
-            # Save changes
             db.session.commit()
-            flash('SMS настройките са запазени успешно!', 'success')
+            flash('Настройките са запазени успешно!', 'success')
             
         except Exception as e:
             db.session.rollback()
-            flash('Възникна грешка при запазване на настройките.', 'error')
-            print(f"Error saving SMS settings: {str(e)}")
+            flash(f'Грешка при запазване на настройките: {str(e)}', 'error')
             
         return redirect(url_for('sms_settings'))
     

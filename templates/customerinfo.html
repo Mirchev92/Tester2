@@ -149,23 +149,22 @@
 
         function showAddCustomerModal() {
             document.getElementById('modalTitle').textContent = 'Add Customer';
+            document.getElementById('customerId').value = '';
             customerForm.reset();
             modal.style.display = 'block';
         }
 
         function editCustomer(customerId) {
-            console.log('Attempting to fetch customer:', customerId); // Debug log
+            document.getElementById('modalTitle').textContent = 'Edit Customer';
             
             fetch(`/api/customer/${customerId}`)
                 .then(response => {
-                    console.log('Response status:', response.status); // Debug log
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Received data:', data); // Debug log
                     document.getElementById('customerId').value = customerId;
                     document.getElementById('phone').value = data.phone_number || '';
                     document.getElementById('name').value = data.name || '';
@@ -176,11 +175,12 @@
                     modal.style.display = 'block';
                 })
                 .catch(error => {
-                    console.error('Detailed error:', error); // More detailed error logging
-                    alert('Error fetching customer data: ' + error.message);
+                    console.error('Error:', error);
+                    alert('Error fetching customer data');
                 });
         }
 
+        // Close modal when clicking X or outside
         closeBtn.onclick = function() {
             modal.style.display = 'none';
         }
@@ -191,6 +191,7 @@
             }
         }
 
+        // Form submission
         customerForm.onsubmit = function(e) {
             e.preventDefault();
             const customerId = document.getElementById('customerId').value;
@@ -221,40 +222,29 @@
                 } else {
                     alert(data.error || 'An error occurred');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving');
             });
         };
 
         function deleteCustomer(customerId) {
             if (confirm('Are you sure you want to delete this customer?')) {
                 fetch(`/api/customer/${customerId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    }
+                    method: 'DELETE'
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => Promise.reject(err));
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Remove the row from the table
-                        const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
-                        if (row) {
-                            row.remove();
-                        }
-                        // Optionally reload the page
-                        window.location.reload();
+                        location.reload();
                     } else {
                         alert(data.error || 'Error deleting customer');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An error occurred while deleting the customer');
+                    alert('Error deleting customer');
                 });
             }
         }

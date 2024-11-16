@@ -11,52 +11,44 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <!-- Sidebar Menu -->
-    <div class="sidebar">
-        <div class="sidebar-content">
-            <a href="{{ url_for('dashboard') }}" class="sidebar-item">
-                <i class="fas fa-chart-line"></i>
-                Dashboard
-            </a>
-            <a href="{{ url_for('customers') }}" class="sidebar-item">
-                <i class="fas fa-users"></i>
-                Customers
-            </a>
-            <a href="{{ url_for('sms_settings') }}" class="sidebar-item">
-                <i class="fas fa-sms"></i>
-                SMS Настройки
-            </a>
-            <a href="{{ url_for('about') }}" class="sidebar-item">
-                <i class="fas fa-info-circle"></i>
-                За нас
-            </a>
-        </div>
-    </div>
-
-    <!-- Existing navbar and content with adjustment -->
-    <div class="main-content">
-        <!-- Navigation Bar -->
-        <nav class="navbar">
-            <div class="navbar-container">
-                <div class="navbar-brand">
-                    <i class="fas fa-phone-missed"></i> MissCall Dashboard
-                </div>
-                <div class="user-profile">
-                    <div class="user-info">
-                        <i class="fas fa-user-circle"></i>
-                        <span>{{ current_user.username }}</span>
-                    </div>
-                    <a href="{{ url_for('logout') }}" class="logout-btn">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </div>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-content">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-item">
+                    <i class="fas fa-chart-line"></i>
+                    Dashboard
+                </a>
+                <a href="{{ url_for('customers') }}" class="sidebar-item">
+                    <i class="fas fa-users"></i>
+                    Customers
+                </a>
+                <a href="{{ url_for('sms_settings') }}" class="sidebar-item">
+                    <i class="fas fa-sms"></i>
+                    SMS Настройки
+                </a>
+                <a href="{{ url_for('about') }}" class="sidebar-item">
+                    <i class="fas fa-info-circle"></i>
+                    За нас
+                </a>
             </div>
-        </nav>
+        </div>
 
         <!-- Main Content -->
-        <div class="container">
-            <!-- Stats Grid -->
-            <div class="stats-grid">
+        <div class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <h1>MissCall Dashboard</h1>
+                <div class="user-actions">
+                    <span>{{ current_user.username }}</span>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+                </div>
+            </header>
+
+            <!-- Content Block -->
+            {% block dashboard_content %}
+            <!-- Stats Overview -->
+            <div class="stats-overview">
                 <div class="stat-card">
                     <div class="stat-card-header">
                         <span>Total Missed Calls</span>
@@ -85,31 +77,11 @@
                         {{ response_rate }}%
                     </div>
                 </div>
-
-                <!-- New SMS Settings Widget -->
-                <div class="stat-card sms-widget">
-                    <div class="stat-card-header">
-                        <div class="sms-toggle">
-                            <span>Включване на функция Автоматичен SMS</span>
-                            <label class="switch">
-                                <input type="checkbox" id="smsToggle" checked>
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="sms-template">
-                        <div class="template-label">
-                            <label for="smsTemplate">Шаблон на съобщението:</label>
-                        </div>
-                        <textarea id="smsTemplate" rows="3">Здравейте, пропуснах обаждането Ви. Ще се свържа с вас при първа възможност.</textarea>
-                        <button class="save-btn">Запази</button>
-                    </div>
-                </div>
             </div>
 
-            <!-- Missed Calls Table -->
-            <div class="calls-card">
-                <h2 class="card-title">Recent Missed Calls</h2>
+            <!-- Recent Calls -->
+            <div class="calls-section">
+                <h2>Recent Missed Calls</h2>
                 <div class="table-container">
                     <table>
                         <thead>
@@ -166,6 +138,7 @@
                     </table>
                 </div>
             </div>
+            {% endblock %}
         </div>
     </div>
 
@@ -204,44 +177,6 @@
             });
         }
 
-        // SMS Toggle functionality
-        document.getElementById('smsToggle').addEventListener('change', function() {
-            fetch('/api/toggle-sms', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    enabled: this.checked
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success) {
-                    this.checked = !this.checked;
-                }
-            });
-        });
-
-        function saveSmsText() {
-            const smsText = document.getElementById('smsText').value;
-            fetch('/api/update-sms-text', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    text: smsText
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('SMS текстът е запазен успешно!');
-                }
-            });
-        }
-
         function saveAsCustomer(phoneNumber) {
             fetch('/api/add-customer', {
                 method: 'POST',
@@ -268,5 +203,6 @@
             });
         }
     </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

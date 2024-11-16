@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>За нас - MissCall App</title>
-    <!-- Include FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Link to your CSS file -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -33,28 +30,6 @@
         </div>
     </div>
 
-    <!-- Modal for Settings -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h2>Настройки на SMS</h2>
-            <div class="settings-content">
-                <div class="sms-settings">
-                    <label for="smsText">SMS Съобщение:</label>
-                    <textarea id="smsText" rows="4">Здравейте, пропуснах обаждането ви. Ще се свържа с вас при първа възможност.</textarea>
-                    <button onclick="saveSmsText()" class="save-btn">Запази</button>
-                </div>
-                <div class="sms-toggle">
-                    <label>SMS Функция:</label>
-                    <label class="switch">
-                        <input type="checkbox" id="smsToggle">
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Content -->
     <div class="main-content">
         <!-- Navigation Bar -->
@@ -75,110 +50,85 @@
             </div>
         </nav>
 
-        <!-- About Content -->
+        <!-- Redesigned About Content -->
         <div class="container">
             <div class="about-page">
-                <h1>За нас</h1>
-                <div class="about-section">
-                    <h2>Какво е MissCall?</h2>
-                    <p>MissCall е приложение, което автоматично изпраща SMS съобщения на пропуснати обаждания.</p>
-                    
-                    <h2>Как работи?</h2>
+                <div class="about-hero">
+                    <h1>Добре дошли в MissCall</h1>
+                    <p class="hero-subtitle">Автоматизирайте вашата комуникация с клиенти</p>
+                </div>
+
+                <div class="about-grid">
+                    <!-- What is MissCall Section -->
+                    <div class="about-card main-card">
+                        <h2>Какво е MissCall?</h2>
+                        <p>MissCall е интелигентно решение, което автоматично изпраща персонализирани SMS съобщения на пропуснати обаждания, помагайки ви да поддържате професионална комуникация с вашите клиенти.</p>
+                    </div>
+
+                    <!-- How it Works Section -->
                     <div class="features-grid">
                         <div class="feature-card">
-                            <i class="fas fa-phone-slash"></i>
+                            <div class="feature-icon">
+                                <i class="fas fa-phone-slash"></i>
+                            </div>
                             <h3>Засичане</h3>
-                            <p>Засича пропуснати обаждания автоматично</p>
+                            <p>Автоматично засича пропуснати обаждания в реално време</p>
                         </div>
                         
                         <div class="feature-card">
-                            <i class="fas fa-paper-plane"></i>
+                            <div class="feature-icon">
+                                <i class="fas fa-paper-plane"></i>
+                            </div>
                             <h3>Изпращане</h3>
-                            <p>Автоматично изпраща персонализирано съобщение</p>
+                            <p>Моментално изпраща персонализирано съобщение</p>
                         </div>
                         
                         <div class="feature-card">
-                            <i class="fas fa-chart-bar"></i>
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
                             <h3>Проследяване</h3>
-                            <p>Проследява статуса на изпратените съобщения</p>
+                            <p>Детайлна статистика за всички съобщения</p>
                         </div>
                     </div>
 
-                    <h2>Предимства</h2>
-                    <ul class="benefits-list">
-                        <li><i class="fas fa-check"></i> Никога не пропускате важни обажданя</li>
-                        <li><i class="fas fa-check"></i> Професионално отношение към клиентите</li>
-                        <li><i class="fas fa-check"></i> Лесна настройка и управление</li>
-                        <li><i class="fas fa-check"></i> Персонализирани съобщения</li>
-                    </ul>
+                    <!-- Benefits Section -->
+                    <div class="benefits-section">
+                        <h2>Защо да изберете MissCall?</h2>
+                        <div class="benefits-grid">
+                            <div class="benefit-item">
+                                <i class="fas fa-check-circle"></i>
+                                <div class="benefit-content">
+                                    <h4>Никога не пропускате важни обаждания</h4>
+                                    <p>Автоматичен отговор на всяко пропуснато обаждане</p>
+                                </div>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-users"></i>
+                                <div class="benefit-content">
+                                    <h4>Професионално отношение</h4>
+                                    <p>Изградете доверие с вашите клиенти</p>
+                                </div>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-sliders-h"></i>
+                                <div class="benefit-content">
+                                    <h4>Лесна настройка</h4>
+                                    <p>Интуитивен интерфейс и бърза конфигурация</p>
+                                </div>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-edit"></i>
+                                <div class="benefit-content">
+                                    <h4>Персонализация</h4>
+                                    <p>Настройте съобщенията според вашите нужди</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <script>
-        // Settings modal functionality
-        function showSettings() {
-            // Load current settings when opening the modal
-            fetch('/api/get-settings')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('smsText').value = data.sms_text;
-                    document.getElementById('smsToggle').checked = data.sms_enabled;
-                });
-            document.getElementById('settingsModal').style.display = 'block';
-        }
-
-        // Close modal when clicking X or outside
-        document.querySelectorAll('.close-btn').forEach(btn => {
-            btn.onclick = function() {
-                this.closest('.modal').style.display = 'none';
-            }
-        });
-
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
-        }
-
-        // SMS Toggle functionality
-        document.getElementById('smsToggle').addEventListener('change', function() {
-            fetch('/api/toggle-sms', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    enabled: this.checked
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success) {
-                    this.checked = !this.checked;
-                }
-            });
-        });
-
-        function saveSmsText() {
-            const smsText = document.getElementById('smsText').value;
-            fetch('/api/update-sms-text', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    text: smsText
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('SMS текстът е запазен успешно!');
-                }
-            });
-        }
-    </script>
 </body>
 </html> 
