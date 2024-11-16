@@ -12,6 +12,11 @@ from flask_limiter.util import get_remote_address
 import re
 from datetime import timedelta
 import logging
+from functools import wraps
+import random
+import string
+import psutil
+from logging.handlers import RotatingFileHandler
 
 # Set up logging configuration
 logging.basicConfig(
@@ -53,6 +58,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(256), nullable=False)
     phone_number = db.Column(db.String(15), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
     missed_calls = db.relationship('MissedCall', backref='user', lazy=True)
     sms_enabled = db.Column(db.Boolean, default=True)
     sms_template = db.Column(db.Text, default='Здравейте, пропуснах обаждането ви. Ще се свържа с вас при първа възможност.')
@@ -82,6 +88,20 @@ class Customer(db.Model):
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class UserActivity(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    action = db.Column(db.String(50))  # login, logout, settings_change, etc.
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    details = db.Column(db.Text)
+
+class UserQuota(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    monthly_sms_limit = db.Column(db.Integer, default=1000)
+    sms_sent_this_month = db.Column(db.Integer, default=0)
+    reset_date = db.Column(db.DateTime)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -172,6 +192,16 @@ app.config.update(
     SESSION_COOKIE_SAMESITE='Lax'  # Protect against CSRF
 )
 
+# Add this decorator function
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            flash('Admin access required')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # Routes
 @app.route('/')
 def index():
@@ -224,31 +254,49 @@ def is_saved_customer(phone_number):
     return Customer.query.filter_by(phone_number=phone_number).first() is not None
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
-    # Assuming you have SQLAlchemy models for MissedCall and Customer
-    missed_calls = db.session.query(
-        MissedCall, 
-        Customer.name.label('customer_name')
-    ).outerjoin(
-        Customer, 
-        MissedCall.caller_number == Customer.phone_number
-    ).all()
-    
-    # Format the results
-    formatted_calls = []
-    for call, customer_name in missed_calls:
-        call_dict = {
-            'id': call.id,
-            'call_time': call.call_time,
-            'caller_number': call.caller_number,
-            'message_sent': call.message_sent,
-            'responded': call.responded,
-            'is_saved_customer': customer_name is not None,
-            'customer_name': customer_name
-        }
-        formatted_calls.append(call_dict)
+    try:
+        # Get only missed calls for the current user
+        missed_calls_query = MissedCall.query.filter_by(user_id=current_user.id)
+        
+        # Join with customers and ensure we only get current user's customers
+        missed_calls = db.session.query(
+            MissedCall, 
+            Customer.name.label('customer_name')
+        ).outerjoin(
+            Customer, 
+            db.and_(
+                MissedCall.caller_number == Customer.phone_number,
+                Customer.user_id == current_user.id
+            )
+        ).filter(
+            MissedCall.user_id == current_user.id  # This is crucial
+        ).order_by(
+            MissedCall.call_time.desc()
+        ).all()
+        
+        # Format the results
+        formatted_calls = []
+        for call, customer_name in missed_calls:
+            # Verify the call belongs to current user as an additional safety check
+            if call.user_id == current_user.id:
+                call_dict = {
+                    'id': call.id,
+                    'call_time': call.call_time,
+                    'caller_number': call.caller_number,
+                    'message_sent': call.message_sent,
+                    'responded': call.responded,
+                    'is_saved_customer': customer_name is not None,
+                    'customer_name': customer_name
+                }
+                formatted_calls.append(call_dict)
 
-    return render_template('dashboard.html', missed_calls=formatted_calls)
+        return render_template('dashboard.html', missed_calls=formatted_calls)
+        
+    except Exception as e:
+        app.logger.error(f"Error in dashboard route: {str(e)}")
+        return render_template('errors/500.html'), 500
 
 @app.route('/logout')
 @login_required
@@ -561,6 +609,213 @@ def sms_settings():
         return redirect(url_for('sms_settings'))
     
     return render_template('sms-settings.html')
+
+@app.route('/admin')
+@login_required
+@admin_required
+def admin_dashboard():
+    users = User.query.all()
+    return render_template('admin.html', users=users)
+
+@app.route('/api/admin/update-user', methods=['POST'])
+@login_required
+@admin_required
+def admin_update_user():
+    try:
+        data = request.json
+        user = User.query.get(data['user_id'])
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'})
+        
+        if data['setting'] == 'sms_enabled':
+            user.sms_enabled = data['value']
+        elif data['setting'] == 'is_admin':
+            user.is_admin = data['value']
+        
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/admin/reset-password', methods=['POST'])
+@login_required
+@admin_required
+def admin_reset_password():
+    try:
+        data = request.json
+        user = User.query.get(data['user_id'])
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'})
+        
+        # Generate a random password
+        new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+        user.password = generate_password_hash(new_password, method='pbkdf2:sha256:600000')
+        
+        db.session.commit()
+        return jsonify({'success': True, 'new_password': new_password})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/admin/delete-user', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_user():
+    try:
+        data = request.json
+        user = User.query.get(data['user_id'])
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'})
+        
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/admin/statistics', methods=['GET'])
+@login_required
+@admin_required
+def get_statistics():
+    try:
+        stats = {
+            'total_users': User.query.count(),
+            'total_calls': MissedCall.query.count(),
+            'total_sms_sent': MissedCall.query.filter(MissedCall.message_sent.isnot(None)).count(),
+            'users_by_status': {
+                'active': User.query.filter_by(sms_enabled=True).count(),
+                'inactive': User.query.filter_by(sms_enabled=False).count()
+            }
+        }
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/admin/user-activity/<user_id>')
+@login_required
+@admin_required
+def get_user_activity(user_id):
+    activities = UserActivity.query.filter_by(user_id=user_id).order_by(UserActivity.timestamp.desc()).limit(100)
+    return jsonify([{
+        'action': a.action,
+        'timestamp': a.timestamp,
+        'details': a.details
+    } for a in activities])
+
+@app.route('/api/admin/templates', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def manage_templates():
+    if request.method == 'POST':
+        data = request.json
+        user = User.query.get(data['user_id'])
+        if user:
+            user.sms_template = data['template']
+            user.off_hours_message = data['off_hours_message']
+            user.vacation_message = data['vacation_message']
+            db.session.commit()
+            return jsonify({'success': True})
+    return jsonify({'error': 'Invalid request'}), 400
+
+@app.route('/api/admin/quotas', methods=['POST'])
+@login_required
+@admin_required
+def update_quota():
+    data = request.json
+    quota = UserQuota.query.filter_by(user_id=data['user_id']).first()
+    if quota:
+        quota.monthly_sms_limit = data['new_limit']
+        db.session.commit()
+        return jsonify({'success': True})
+    return jsonify({'error': 'User quota not found'}), 404
+
+@app.route('/api/admin/system-health')
+@login_required
+@admin_required
+def system_health():
+    try:
+        health_data = {
+            'database_size': get_db_size(),
+            'sms_service_status': check_sinch_status(),
+            'recent_errors': get_recent_errors(),
+            'system_load': {
+                'cpu': psutil.cpu_percent(),
+                'memory': psutil.virtual_memory().percent
+            }
+        }
+        return jsonify(health_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def get_db_size():
+    try:
+        db_path = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+        return os.path.getsize(db_path) / (1024 * 1024)  # Size in MB
+    except:
+        return 0
+
+def check_sinch_status():
+    try:
+        response = requests.get(f"https://us.sms.api.sinch.com/xms/v1/{app.config['SINCH_SERVICE_PLAN_ID']}/batches", 
+                              headers={"Authorization": f"Bearer {app.config['SINCH_API_TOKEN']}"})
+        return response.status_code == 200
+    except:
+        return False
+
+def get_recent_errors():
+    # This would typically connect to your logging system
+    # For now, return the last 5 errors from the application log
+    try:
+        with open('app.log', 'r') as f:
+            errors = [line for line in f if 'ERROR' in line]
+            return errors[-5:]
+    except:
+        return []
+
+def setup_logging(app):
+    # Create logs directory if it doesn't exist
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    
+    # Set up file handler
+    file_handler = RotatingFileHandler(
+        'logs/misscall.log',
+        maxBytes=10240,
+        backupCount=10
+    )
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    ))
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+
+    # Set up console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_handler.setFormatter(formatter)
+    app.logger.addHandler(console_handler)
+
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('MissCall startup')
+
+# Add this to your app initialization
+setup_logging(app)
+
+@app.errorhandler(404)
+def not_found_error(error):
+    app.logger.error(f'Page not found: {request.url}')
+    return render_template('errors/404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    app.logger.error(f'Server Error: {error}')
+    return render_template('errors/500.html'), 500
+
+@app.errorhandler(Exception)
+def unhandled_exception(e):
+    app.logger.error(f'Unhandled Exception: {str(e)}')
+    return render_template('errors/500.html'), 500
 
 if __name__ == '__main__':
     with app.app_context():
