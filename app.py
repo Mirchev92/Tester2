@@ -17,6 +17,7 @@ import random
 import string
 import psutil
 from logging.handlers import RotatingFileHandler
+from sqlalchemy import or_
 
 # Set up logging configuration
 logging.basicConfig(
@@ -68,6 +69,9 @@ class User(UserMixin, db.Model):
     off_hours_message = db.Column(db.Text, default='Здравейте, в момента сме извън работно време. Ще се свържем с вас през работния ден.')
     vacation_mode = db.Column(db.Boolean, default=False)
     vacation_message = db.Column(db.Text, default='Здравейте, в момента съм в отпуск. Ще се свържа с вас след завръщането си.')
+    last_login = db.Column(db.DateTime)
+    is_online = db.Column(db.Boolean, default=False)
+    last_seen = db.Column(db.DateTime)
 
 class MissedCall(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -92,9 +96,12 @@ class Customer(db.Model):
 class UserActivity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    action = db.Column(db.String(50))  # login, logout, settings_change, etc.
+    action = db.Column(db.String(50))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     details = db.Column(db.Text)
+    
+    # Add relationship to User model
+    user = db.relationship('User', backref='activities')
 
 class UserQuota(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -236,7 +243,7 @@ def register():
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("5 per minute") # Rate limiting for login attempts
+@limiter.limit("5 per minute")
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -244,11 +251,41 @@ def login():
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
-            login_user(user, remember=True)  # Enable remember me
+            login_user(user, remember=True)
+            
+            # Log login activity
+            activity = UserActivity(
+                user_id=user.id,
+                action='login',
+                details=f'User logged in from IP: {request.remote_addr}'
+            )
+            db.session.add(activity)
+            db.session.commit()
+            
             return redirect(url_for('dashboard'))
-        
+            
+        # Add flash message for failed login
         flash('Invalid username or password')
+        return redirect(url_for('login'))
+
+    # GET request - show login form    
     return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    if current_user.is_authenticated:
+        # Log logout activity
+        activity = UserActivity(
+            user_id=current_user.id,
+            action='logout',
+            details='User logged out'
+        )
+        db.session.add(activity)
+        db.session.commit()
+        
+    logout_user()
+    return redirect(url_for('index'))
 
 def is_saved_customer(phone_number):
     return Customer.query.filter_by(phone_number=phone_number).first() is not None
@@ -297,12 +334,6 @@ def dashboard():
     except Exception as e:
         app.logger.error(f"Error in dashboard route: {str(e)}")
         return render_template('errors/500.html'), 500
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('index'))
 
 # API Routes
 @app.route('/api/test', methods=['GET'])
@@ -582,29 +613,37 @@ def handle_customer(customer_id):
 def sms_settings():
     if request.method == 'POST':
         try:
-            # Update SMS settings
+            # Track old values for logging
+            old_settings = {
+                'sms_enabled': current_user.sms_enabled,
+                'template': current_user.sms_template,
+                'working_hours': f"{current_user.working_hours_start}-{current_user.working_hours_end}",
+                'vacation_mode': current_user.vacation_mode
+            }
+            
+            # Update settings
             current_user.sms_enabled = 'sms_enabled' in request.form
             current_user.sms_template = request.form.get('sms_template', '')
-            
-            # Update working hours
             current_user.working_hours_start = request.form.get('working_hours_start', '09:00')
             current_user.working_hours_end = request.form.get('working_hours_end', '18:00')
-            
-            # Update working days
-            working_days = request.form.getlist('working_days')
-            current_user.working_days = ','.join(working_days) if working_days else 'Monday,Tuesday,Wednesday,Thursday,Friday'
-            
-            # Update messages
+            current_user.working_days = ','.join(request.form.getlist('working_days'))
             current_user.off_hours_message = request.form.get('off_hours_message', '')
             current_user.vacation_mode = 'vacation_mode' in request.form
             current_user.vacation_message = request.form.get('vacation_message', '')
             
+            # Log the settings change
+            log_user_activity(
+                current_user.id,
+                'settings_change',
+                f'Changed settings from {old_settings} to new values'
+            )
+            
             db.session.commit()
-            flash('Настройките са запазени успешно!', 'success')
+            flash('Settings saved successfully!', 'success')
             
         except Exception as e:
             db.session.rollback()
-            flash(f'Грешка при запазване на настройките: {str(e)}', 'error')
+            flash(f'Error saving settings: {str(e)}', 'error')
             
         return redirect(url_for('sms_settings'))
     
@@ -677,29 +716,46 @@ def admin_delete_user():
 @admin_required
 def get_statistics():
     try:
+        # Consider users inactive if they haven't been seen in 5 minutes
+        five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+        
         stats = {
             'total_users': User.query.count(),
-            'total_calls': MissedCall.query.count(),
-            'total_sms_sent': MissedCall.query.filter(MissedCall.message_sent.isnot(None)).count(),
             'users_by_status': {
-                'active': User.query.filter_by(sms_enabled=True).count(),
-                'inactive': User.query.filter_by(sms_enabled=False).count()
-            }
+                'active': User.query.filter(User.last_seen > five_minutes_ago).count(),
+                'inactive': User.query.filter(
+                    or_(User.last_seen <= five_minutes_ago, User.last_seen.is_(None))
+                ).count()
+            },
+            'total_calls': MissedCall.query.count(),
+            'total_sms_sent': MissedCall.query.filter(MissedCall.message_sent.isnot(None)).count()
         }
         return jsonify(stats)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/admin/user-activity/<user_id>')
+@app.route('/api/admin/user-activity/<int:user_id>')
 @login_required
 @admin_required
 def get_user_activity(user_id):
-    activities = UserActivity.query.filter_by(user_id=user_id).order_by(UserActivity.timestamp.desc()).limit(100)
+    activities = db.session.query(
+        UserActivity, 
+        User.username
+    ).join(
+        User, 
+        UserActivity.user_id == User.id
+    ).filter(
+        UserActivity.user_id == user_id
+    ).order_by(
+        UserActivity.timestamp.desc()
+    ).limit(100).all()
+    
     return jsonify([{
-        'action': a.action,
-        'timestamp': a.timestamp,
-        'details': a.details
-    } for a in activities])
+        'username': username,
+        'action': activity.action,
+        'timestamp': activity.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+        'details': activity.details
+    } for activity, username in activities])
 
 @app.route('/api/admin/templates', methods=['GET', 'POST'])
 @login_required
@@ -816,6 +872,28 @@ def internal_error(error):
 def unhandled_exception(e):
     app.logger.error(f'Unhandled Exception: {str(e)}')
     return render_template('errors/500.html'), 500
+
+@app.before_request
+def before_request():
+    if current_user.is_authenticated:
+        current_user.last_seen = datetime.utcnow()
+        # Consider a user offline if they haven't been seen in 5 minutes
+        if (datetime.utcnow() - current_user.last_seen).total_seconds() > 300:
+            current_user.is_online = False
+        db.session.commit()
+
+def log_user_activity(user_id, action, details=None):
+    try:
+        activity = UserActivity(
+            user_id=user_id,
+            action=action,
+            details=details
+        )
+        db.session.add(activity)
+        db.session.commit()
+    except Exception as e:
+        app.logger.error(f"Error logging user activity: {str(e)}")
+        db.session.rollback()
 
 if __name__ == '__main__':
     with app.app_context():

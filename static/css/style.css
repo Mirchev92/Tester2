@@ -1700,3 +1700,24 @@ button:disabled {
     background: #ccc;
     cursor: not-allowed;
 }
+
+.error-container {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.error-container h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: #e74c3c;
+}
+
+.error-container p {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.error-actions {
+    margin-top: 30px;
+}

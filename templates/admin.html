@@ -115,14 +115,27 @@
 
             <div class="admin-section">
                 <h2>User Activity Log</h2>
-                <select id="user-select" onchange="loadUserActivity(this.value)">
+                <select id="selected-user" onchange="updateActivityLog()">
                     <option value="">Select User</option>
                     {% for user in users %}
                     <option value="{{ user.id }}">{{ user.username }}</option>
                     {% endfor %}
                 </select>
-                <div class="activity-log" id="activity-log">
-                    Select a user to view their activity
+                <div class="activity-log-section">
+                    <h3>User Activity Log</h3>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Action</th>
+                                <th>Time</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activity-log">
+                            <!-- Will be populated via JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -293,6 +306,24 @@
             });
         }
 
+        function updateActivityLog() {
+            const userId = document.getElementById('selected-user').value;
+            
+            fetch(`/api/admin/user-activity/${userId}`)
+                .then(response => response.json())
+                .then(activities => {
+                    const logTable = document.getElementById('activity-log');
+                    logTable.innerHTML = activities.map(activity => `
+                        <tr>
+                            <td>${activity.username}</td>
+                            <td>${activity.action}</td>
+                            <td>${activity.timestamp}</td>
+                            <td>${activity.details}</td>
+                        </tr>
+                    `).join('');
+                });
+        }
+
         // Load initial data
         loadStatistics();
         loadSystemHealth();
@@ -300,6 +331,11 @@
         // Refresh data periodically
         setInterval(loadStatistics, 300000); // every 5 minutes
         setInterval(loadSystemHealth, 60000); // every minute
+
+        // Update every 30 seconds
+        setInterval(updateActivityLog, 30000);
+        // Initial load
+        updateActivityLog();
     </script>
 </body>
 </html> 
