@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, UTC, timezone, timedelta
 from flask_cors import CORS
 import os
 import requests
@@ -18,6 +18,7 @@ import string
 import psutil
 from logging.handlers import RotatingFileHandler
 from sqlalchemy import or_
+import pytz
 
 # Set up logging configuration
 logging.basicConfig(
@@ -42,11 +43,11 @@ app.config['SINCH_SENDER'] = 'MissCall'
 
 # Initialize extensions
 db = SQLAlchemy(app)
-migrate = Migrate(app, db)  # Add this line
+migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Add rate limiter
+# Simplified rate limiter configuration
 limiter = Limiter(
     app=app,
     key_func=get_remote_address,
@@ -71,12 +72,16 @@ class User(UserMixin, db.Model):
     vacation_message = db.Column(db.Text, default='Здравейте, в момента съм в отпуск. Ще се свържа с вас след завръщането си.')
     last_login = db.Column(db.DateTime)
     is_online = db.Column(db.Boolean, default=False)
-    last_seen = db.Column(db.DateTime)
+    last_seen = db.Column(db.DateTime(timezone=True))
+
+    def set_last_seen(self):
+        """Helper method to set last_seen with proper timezone"""
+        self.last_seen = datetime.now(UTC)
 
 class MissedCall(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    call_time = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    call_time = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     caller_number = db.Column(db.String(15), nullable=False)
     responded = db.Column(db.Boolean, default=False)
     message_sent = db.Column(db.String(160))
@@ -90,14 +95,16 @@ class Customer(db.Model):
     last_job = db.Column(db.String(500))
     status = db.Column(db.String(50))
     notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    last_updated = db.Column(db.DateTime(timezone=True), 
+                           default=lambda: datetime.now(UTC), 
+                           onupdate=lambda: datetime.now(UTC))
 
 class UserActivity(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     action = db.Column(db.String(50))
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC))
     details = db.Column(db.Text)
     
     # Add relationship to User model
@@ -112,7 +119,7 @@ class UserQuota(db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 def send_sinch_sms(phone_number, message_type='default'):
     user = current_user
@@ -294,45 +301,42 @@ def is_saved_customer(phone_number):
 @login_required
 def dashboard():
     try:
-        # Get only missed calls for the current user
-        missed_calls_query = MissedCall.query.filter_by(user_id=current_user.id)
-        
-        # Join with customers and ensure we only get current user's customers
+        # Get missed calls with customer information using a single query
         missed_calls = db.session.query(
-            MissedCall, 
-            Customer.name.label('customer_name')
+            MissedCall,
+            Customer
         ).outerjoin(
-            Customer, 
+            Customer,
             db.and_(
                 MissedCall.caller_number == Customer.phone_number,
                 Customer.user_id == current_user.id
             )
         ).filter(
-            MissedCall.user_id == current_user.id  # This is crucial
+            MissedCall.user_id == current_user.id
         ).order_by(
             MissedCall.call_time.desc()
         ).all()
-        
+
         # Format the results
         formatted_calls = []
-        for call, customer_name in missed_calls:
-            # Verify the call belongs to current user as an additional safety check
-            if call.user_id == current_user.id:
-                call_dict = {
-                    'id': call.id,
-                    'call_time': call.call_time,
-                    'caller_number': call.caller_number,
-                    'message_sent': call.message_sent,
-                    'responded': call.responded,
-                    'is_saved_customer': customer_name is not None,
-                    'customer_name': customer_name
-                }
-                formatted_calls.append(call_dict)
+        for call, customer in missed_calls:
+            call_dict = {
+                'id': call.id,
+                'call_time': call.call_time,
+                'caller_number': call.caller_number,
+                'message_sent': call.message_sent,
+                'responded': call.responded,
+                'is_saved_customer': customer is not None,
+                'customer_name': customer.name if customer else None
+            }
+            formatted_calls.append(call_dict)
 
         return render_template('dashboard.html', missed_calls=formatted_calls)
-        
+
     except Exception as e:
-        app.logger.error(f"Error in dashboard route: {str(e)}")
+        # Log the error
+        app.logger.error(f"Dashboard error: {str(e)}")
+        # Return the 500 error page
         return render_template('errors/500.html'), 500
 
 # API Routes
@@ -716,8 +720,8 @@ def admin_delete_user():
 @admin_required
 def get_statistics():
     try:
-        # Consider users inactive if they haven't been seen in 5 minutes
-        five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
+        # Update to use timezone-aware datetime
+        five_minutes_ago = datetime.now(UTC) - timedelta(minutes=5)
         
         stats = {
             'total_users': User.query.count(),
@@ -734,28 +738,43 @@ def get_statistics():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/admin/user-activity/<int:user_id>')
+@app.route('/api/admin/user-activity/', methods=['GET'])
+@app.route('/api/admin/user-activity/<int:user_id>', methods=['GET'])
 @login_required
 @admin_required
-def get_user_activity(user_id):
-    activities = db.session.query(
-        UserActivity, 
-        User.username
-    ).join(
-        User, 
-        UserActivity.user_id == User.id
-    ).filter(
-        UserActivity.user_id == user_id
-    ).order_by(
-        UserActivity.timestamp.desc()
-    ).limit(100).all()
-    
-    return jsonify([{
-        'username': username,
-        'action': activity.action,
-        'timestamp': activity.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-        'details': activity.details
-    } for activity, username in activities])
+def get_user_activity(user_id=None):
+    try:
+        # Base query
+        query = db.session.query(
+            UserActivity, 
+            User.username
+        ).join(
+            User, 
+            UserActivity.user_id == User.id
+        )
+        
+        # If user_id is provided, filter for that user
+        if user_id is not None:
+            query = query.filter(UserActivity.user_id == user_id)
+            
+        # Get the activities, ordered by most recent first
+        activities = query.order_by(
+            UserActivity.timestamp.desc()
+        ).limit(100).all()
+        
+        # Format the response
+        activity_list = [{
+            'username': username,
+            'action': activity.action,
+            'timestamp': activity.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'details': activity.details
+        } for activity, username in activities]
+        
+        return jsonify(activity_list)
+        
+    except Exception as e:
+        app.logger.error(f"Error getting user activity: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/admin/templates', methods=['GET', 'POST'])
 @login_required
@@ -876,11 +895,37 @@ def unhandled_exception(e):
 @app.before_request
 def before_request():
     if current_user.is_authenticated:
-        current_user.last_seen = datetime.utcnow()
-        # Consider a user offline if they haven't been seen in 5 minutes
-        if (datetime.utcnow() - current_user.last_seen).total_seconds() > 300:
-            current_user.is_online = False
-        db.session.commit()
+        try:
+            # Create timezone-aware current time in UTC
+            current_time = datetime.now(UTC)
+            
+            # If last_seen is None, just update it and return
+            if current_user.last_seen is None:
+                current_user.last_seen = current_time
+                db.session.commit()
+                return
+            
+            # Ensure last_seen is timezone-aware
+            if current_user.last_seen.tzinfo is None:
+                # Convert naive datetime to UTC
+                current_user.last_seen = pytz.UTC.localize(current_user.last_seen)
+            
+            # Now both datetimes are timezone-aware, we can safely subtract
+            time_difference = (current_time - current_user.last_seen).total_seconds()
+            
+            # Update last_seen
+            current_user.last_seen = current_time
+            db.session.commit()
+            
+            # Check for timeout (5 minutes = 300 seconds)
+            if time_difference > 300:
+                logout_user()
+                return redirect(url_for('login'))
+                
+        except Exception as e:
+            app.logger.error(f"Error in before_request: {str(e)}")
+            # Prevent the error from breaking the application
+            pass
 
 def log_user_activity(user_id, action, details=None):
     try:
