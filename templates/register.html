@@ -1,35 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - MissCall App</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="auth-container">
-        <h1 class="auth-title">Create Account</h1>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="flash-message error">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        <form method="POST" action="{{ url_for('register') }}">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    required 
-                    placeholder="Enter your username"
-                >
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
+{% extends "base.html" %}
+
+{% block title %}Register - MissCall App{% endblock %}
+
+{% block auth_content %}
+<div class="auth-container animate-fade-in">
+    <div class="auth-logo">
+        <i class="fas fa-user-plus"></i>
+    </div>
+    <h1 class="auth-title">Create Account</h1>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="flash-message error animate-shake">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <form method="POST" action="{{ url_for('register') }}" class="auth-form">
+        <div class="form-group">
+            <label for="username">
+                <i class="fas fa-user"></i>
+                Username
+            </label>
+            <input 
+                type="text" 
+                id="username" 
+                name="username" 
+                required 
+                placeholder="Enter your username"
+            >
+        </div>
+        <div class="form-group">
+            <label for="password">
+                <i class="fas fa-lock"></i>
+                Password
+            </label>
+            <div class="password-input-container">
                 <input 
                     type="password" 
                     id="password" 
@@ -37,34 +45,85 @@
                     required 
                     placeholder="Choose a strong password"
                 >
-                <div class="password-requirements">
-                    <p>Password must contain:</p>
-                    <ul>
-                        <li>At least 8 characters</li>
-                        <li>At least one uppercase letter</li>
-                        <li>At least one lowercase letter</li>
-                        <li>At least one number</li>
-                        <li>At least one special character (!@#$%^&*(),.?":{}|<>)</li>
-                    </ul>
-                </div>
+                <button type="button" class="toggle-password" onclick="togglePassword()">
+                    <i class="fas fa-eye"></i>
+                </button>
             </div>
-            <div class="form-group">
-                <label for="phone_number">Phone Number</label>
-                <input 
-                    type="tel" 
-                    id="phone_number" 
-                    name="phone_number" 
-                    pattern="\+359[0-9]{9}" 
-                    placeholder="+359xxxxxxxxx" 
-                    title="Please enter a valid Bulgarian phone number starting with +359" 
-                    required
-                >
+            <div class="password-requirements">
+                <p>Password must contain:</p>
+                <ul id="password-checks">
+                    <li data-requirement="length"><i class="fas fa-circle"></i> At least 8 characters</li>
+                    <li data-requirement="uppercase"><i class="fas fa-circle"></i> One uppercase letter</li>
+                    <li data-requirement="lowercase"><i class="fas fa-circle"></i> One lowercase letter</li>
+                    <li data-requirement="number"><i class="fas fa-circle"></i> One number</li>
+                    <li data-requirement="special"><i class="fas fa-circle"></i> One special character</li>
+                </ul>
             </div>
-            <button type="submit" class="auth-btn">Register</button>
-        </form>
-        <div class="auth-links">
-            <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
         </div>
+        <div class="form-group">
+            <label for="phone_number">
+                <i class="fas fa-phone"></i>
+                Phone Number
+            </label>
+            <input 
+                type="tel" 
+                id="phone_number" 
+                name="phone_number" 
+                pattern="\+359[0-9]{9}" 
+                placeholder="+359xxxxxxxxx" 
+                title="Please enter a valid Bulgarian phone number starting with +359" 
+                required
+            >
+        </div>
+        <button type="submit" class="auth-btn" id="register-btn" disabled>
+            <i class="fas fa-user-plus"></i>
+            Register
+        </button>
+    </form>
+    <div class="auth-links">
+        <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
     </div>
-</body>
-</html>
+</div>
+
+{% block scripts %}
+<script>
+const passwordInput = document.getElementById('password');
+const registerBtn = document.getElementById('register-btn');
+const checks = {
+    length: str => str.length >= 8,
+    uppercase: str => /[A-Z]/.test(str),
+    lowercase: str => /[a-z]/.test(str),
+    number: str => /[0-9]/.test(str),
+    special: str => /[!@#$%^&*(),.?":{}|<>]/.test(str)
+};
+
+passwordInput.addEventListener('input', function() {
+    const password = this.value;
+    let allValid = true;
+    
+    Object.entries(checks).forEach(([key, check]) => {
+        const li = document.querySelector(`[data-requirement="${key}"]`);
+        const isValid = check(password);
+        li.classList.toggle('valid', isValid);
+        li.querySelector('i').className = isValid ? 'fas fa-check-circle' : 'fas fa-circle';
+        allValid = allValid && isValid;
+    });
+    
+    registerBtn.disabled = !allValid;
+});
+
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const toggleBtn = document.querySelector('.toggle-password i');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleBtn.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        toggleBtn.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

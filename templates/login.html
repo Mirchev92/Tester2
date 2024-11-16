@@ -1,57 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - MissCall App</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="auth-container">
-        <h1 class="auth-title">
-            Влезте в<br>
-            MissCall App
-        </h1>
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="flash-message error">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        <form method="POST">
-            <div class="form-group">
-                <label for="username">Потребителско име</label>
-                <input 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    required 
-                    placeholder="Въведете име"
-                    autocomplete="username"
-                    oninvalid="this.setCustomValidity('Моля, въведете потребителско име')"
-                    oninput="this.setCustomValidity('')"
-                >
-            </div>
-            <div class="form-group">
-                <label for="password">Парола</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    required 
-                    placeholder="Въведете парола"
-                    autocomplete="current-password"
-                    oninvalid="this.setCustomValidity('Моля, въведете парола')"
-                    oninput="this.setCustomValidity('')"
-                >
-            </div>
-            <button type="submit" class="auth-btn">Login</button>
-        </form>
-        <div class="auth-links">
-            <p>Нямате акаунт? <a href="{{ url_for('register') }}">Регистрирайте се тук</a></p>
+{% extends "base.html" %}
+
+{% block title %}Login - MissCall App{% endblock %}
+
+{% block auth_content %}
+<div class="auth-container">
+    <h1 class="auth-title">
+        Влезте в<br>
+        MissCall App
+    </h1>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="flash-message error">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <form method="POST">
+        <div class="form-group">
+            <label for="username">Потребителско име</label>
+            <input 
+                type="text" 
+                id="username" 
+                name="username" 
+                required 
+                placeholder="Въведете име"
+                autocomplete="username"
+                oninvalid="this.setCustomValidity('Моля, въведете потребителско име')"
+                oninput="this.setCustomValidity('')"
+            >
         </div>
+        <div class="form-group">
+            <label for="password">Парола</label>
+            <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                required 
+                placeholder="Въведете парола"
+                autocomplete="current-password"
+                oninvalid="this.setCustomValidity('Моля, въведете парола')"
+                oninput="this.setCustomValidity('')"
+            >
+        </div>
+        <button type="submit" class="auth-btn">Login</button>
+    </form>
+    <div class="auth-links">
+        <p>Нямате акаунт? <a href="{{ url_for('register') }}">Регистрирайте се тук</a></p>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

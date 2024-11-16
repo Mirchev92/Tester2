@@ -9,6 +9,8 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f0f2f5;
     min-height: 100vh;
+    display: flex;
+    min-height: 100vh;
 }
 
 /* Navbar */
@@ -16,6 +18,10 @@ body {
     background-color: #7360f2;
     padding: 1rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    width: 100%;
 }
 
 .navbar-container {
@@ -185,65 +191,47 @@ th {
 
 /* Login/Register Form Styles */
 .auth-container {
-    max-width: 400px;
-    margin: 4rem auto;
-    padding: 2rem;
     background: white;
+    padding: 2rem;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: 2rem auto;
 }
 
 .auth-title {
+    color: #333;
     font-size: 2rem;
-    margin-bottom: 1rem;
-    color: #7360f2;
-    line-height: 1.2;
-}
-
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #000000;
-    font-weight: bold;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    text-align: center;
 }
 
 .auth-btn {
-    width: 100%;
-    padding: 0.75rem;
-    background-color: #7360f2;
+    background: #7360f2;
     color: white;
     border: none;
+    padding: 0.75rem 1.5rem;
     border-radius: 4px;
-    cursor: pointer;
+    width: 100%;
     font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
     text-decoration: none;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
 }
 
 .auth-btn:hover {
-    background-color: #5b4ac4;
-    color: white;
-    text-decoration: none;
+    background: #3318ac;
 }
 
 .auth-links {
+    margin-top: 1.5rem;
     text-align: center;
-    margin-top: 1rem;
 }
 
 .auth-links a {
@@ -253,6 +241,45 @@ th {
 
 .auth-links a:hover {
     text-decoration: underline;
+}
+
+.buttons-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #7360f2;
+    box-shadow: 0 0 0 3px rgba(115, 96, 242, 0.1);
+}
+
+/* Flash Messages for Auth Pages */
+.auth-container .flash-message {
+    margin-bottom: 1rem;
+    text-align: center;
 }
 
 /* Flash Messages */
@@ -275,36 +302,34 @@ th {
 
 /* Password Requirements Styling */
 .password-requirements {
-    margin: 10px 0;
-    padding: 10px;
-    background-color: #f8f9fa;  /* Light gray background */
-    border-radius: 4px;
+    margin-top: 0.5rem;
     font-size: 0.9rem;
-}
-
-.password-requirements p {
-    color: #4a5568;  /* Dark gray text */
-    margin-bottom: 5px;
-    font-weight: 600;
+    color: #666;
 }
 
 .password-requirements ul {
-    list-style-type: none;
-    padding-left: 10px;
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
 }
 
 .password-requirements li {
-    color: #000000;  /* Lighter gray text for list items */
-    margin: 3px 0;
-    position: relative;
-    padding-left: 15px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
 }
 
-.password-requirements li:before {
-    content: "•";  /* Bullet point */
-    position: absolute;
-    left: 0;
-    color: #000000;  /* Purple bullet points to match your theme */
+.password-requirements li.valid {
+    color: #10b981;
+}
+
+.password-requirements li i {
+    font-size: 0.8rem;
+}
+
+.password-requirements li.valid i {
+    color: #10b981;
 }
 
 /* Add this to your existing CSS */
@@ -340,42 +365,56 @@ td {
 
 /* Sidebar styles */
 .sidebar {
+    width: 250px;
+    background: white;
+    min-height: 100vh;
     position: fixed;
     left: 0;
     top: 0;
-    bottom: 0;
-    width: 250px;
-    background-color: #7360f2;
-    padding-top: 60px;
-    z-index: 100;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+    z-index: 1000;
 }
 
 .sidebar-content {
     padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .sidebar-item {
     display: flex;
     align-items: center;
-    padding: 1rem;
-    color: white;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #4a5568;
     text-decoration: none;
-    transition: background-color 0.3s;
-    border-radius: 4px;
-    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
 }
 
 .sidebar-item:hover {
-    background-color: #5b4ac4;
+    background: rgba(115, 96, 242, 0.1);
+    color: #7360f2;
+}
+
+.sidebar-item.active {
+    background: #7360f2;
+    color: white;
 }
 
 .sidebar-item i {
-    margin-right: 10px;
+    width: 20px;
+    text-align: center;
 }
 
 /* Adjust main content to accommodate sidebar */
 .main-content {
+    flex: 1;
     margin-left: 250px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Toggle container with better spacing */
@@ -437,19 +476,20 @@ input:checked + .slider:before {
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-        padding-top: 0;
+        width: 60px;
+        overflow: hidden;
     }
-    
+
+    .sidebar-item span {
+        display: none;
+    }
+
     .main-content {
-        margin-left: 0;
+        margin-left: 60px;
     }
-    
-    .modal-content {
-        width: 95%;
-        margin: 5% auto;
+
+    .container {
+        padding: 1rem;
     }
 }
 
@@ -925,24 +965,55 @@ input:checked + .slider:before {
 /* Sidebar Styles */
 .sidebar {
     width: 250px;
-    background: linear-gradient(180deg, #7360f2 0%, #5b4ac4 100%);
-    padding-top: 1rem;
+    background: white;
+    min-height: 100vh;
     position: fixed;
-    height: 100vh;
     left: 0;
     top: 0;
-    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
-    z-index: 100;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.sidebar-content {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: #4a5568;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-item:hover {
+    background: rgba(115, 96, 242, 0.1);
+    color: #7360f2;
+}
+
+.sidebar-item.active {
+    background: #7360f2;
+    color: white;
+}
+
+.sidebar-item i {
+    width: 20px;
+    text-align: center;
 }
 
 /* Main Content Area */
 .main-content {
     flex: 1;
     margin-left: 250px;
-    padding: 2rem;
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Header Section */
@@ -1720,4 +1791,44 @@ button:disabled {
 
 .error-actions {
     margin-top: 30px;
+}
+
+/* Auth pages specific styles */
+body:not(.authenticated) {
+    display: block;
+    background: linear-gradient(135deg, #7360f2 0%, #3318ac 100%);
+}
+
+body:not(.authenticated) .main-content {
+    margin-left: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+/* SMS Settings Animations */
+.setting-content {
+    transition: all 0.3s ease;
+}
+
+.setting-content.collapsed {
+    height: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Form Validation Styles */
+input:invalid {
+    border-color: #dc3545;
+}
+
+input:valid {
+    border-color: #10b981;
+}
+
+/* Disabled Button Styles */
+.auth-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }

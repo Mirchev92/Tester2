@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MissCall App{% endblock %}</title>
+    <!-- Common CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% if current_user.is_authenticated %}authenticated{% endif %}">
+    {% if current_user.is_authenticated %}
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-content">
+            <a href="{{ url_for('dashboard') }}" class="sidebar-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                Dashboard
+            </a>
+            {% if current_user.is_admin %}
+            <a href="{{ url_for('admin_dashboard') }}" class="sidebar-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                <i class="fas fa-user-shield"></i>
+                Admin Panel
+            </a>
+            {% endif %}
+            <a href="{{ url_for('customers') }}" class="sidebar-item {% if request.endpoint == 'customers' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                Customers
+            </a>
+            <a href="{{ url_for('sms_settings') }}" class="sidebar-item {% if request.endpoint == 'sms_settings' %}active{% endif %}">
+                <i class="fas fa-sms"></i>
+                SMS Настройки
+            </a>
+            <a href="{{ url_for('about') }}" class="sidebar-item {% if request.endpoint == 'about' %}active{% endif %}">
+                <i class="fas fa-info-circle"></i>
+                За нас
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="navbar-container">
+                <div class="navbar-brand">
+                    <i class="fas fa-phone-missed"></i>
+                    {% block header_title %}MissCall Dashboard{% endblock %}
+                </div>
+                <div class="user-profile">
+                    <div class="user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span>{{ current_user.username }}</span>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Main Content Block -->
+        {% block content %}{% endblock %}
+    </div>
+    {% else %}
+    <!-- Content for non-authenticated users -->
+    {% block auth_content %}{% endblock %}
+    {% endif %}
+
+    <!-- Common Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

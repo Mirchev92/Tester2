@@ -1,7 +1,11 @@
-{% extends "dashboard.html" %}
+{% extends "base.html" %}
 
-{% block dashboard_content %}
-<div class="settings-container">
+{% block title %}SMS Settings - MissCall App{% endblock %}
+
+{% block header_title %}SMS Settings{% endblock %}
+
+{% block content %}
+<div class="settings-container animate-fade-in">
     <div class="settings-section">
         <h2>SMS Настройки</h2>
         <div class="settings-content">
@@ -102,10 +106,72 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
-    <script src="{{ url_for('static', filename='css/js/toggle_SMS_Settings.js') }}"></script>
+{% block extra_css %}
+<style>
+/* SMS Settings Specific Styles */
+.settings-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.settings-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 2rem;
+}
+
+.setting-block {
+    margin-bottom: 2rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.setting-header {
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.setting-content {
+    padding: 1.5rem;
+}
+
+.toggle-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+/* Add your existing SMS settings styles here */
+</style>
 {% endblock %}
 
-{% block head %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block scripts %}
+<script>
+function toggleSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    const header = section.previousElementSibling;
+    const icon = header.querySelector('i');
+    
+    section.classList.toggle('collapsed');
+    icon.classList.toggle('fa-chevron-down');
+    icon.classList.toggle('fa-chevron-up');
+}
+
+// Add your existing JavaScript here
+</script>
 {% endblock %}
