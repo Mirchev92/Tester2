@@ -147,6 +147,46 @@
         const closeBtn = document.querySelector('.close-btn');
         const customerForm = document.getElementById('customerForm');
 
+        // Add these styles for the modal
+        const modalStyles = document.createElement('style');
+        modalStyles.textContent = `
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.5);
+            }
+
+            .modal-content {
+                background-color: #fefefe;
+                margin: 5% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width: 80%;
+                max-width: 600px;
+                border-radius: 8px;
+                position: relative;
+            }
+
+            .close-btn {
+                position: absolute;
+                right: 20px;
+                top: 10px;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+            }
+
+            .close-btn:hover {
+                color: #7360f2;
+            }
+        `;
+        document.head.appendChild(modalStyles);
+
         function showAddCustomerModal() {
             document.getElementById('modalTitle').textContent = 'Add Customer';
             document.getElementById('customerId').value = '';
@@ -157,6 +197,10 @@
         function editCustomer(customerId) {
             document.getElementById('modalTitle').textContent = 'Edit Customer';
             
+            // Add loading state or disable form while fetching
+            const form = document.getElementById('customerForm');
+            form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = true);
+            
             fetch(`/api/customer/${customerId}`)
                 .then(response => {
                     if (!response.ok) {
@@ -165,6 +209,9 @@
                     return response.json();
                 })
                 .then(data => {
+                    // Enable form elements and populate data
+                    form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
+                    
                     document.getElementById('customerId').value = customerId;
                     document.getElementById('phone').value = data.phone_number || '';
                     document.getElementById('name').value = data.name || '';
@@ -172,11 +219,14 @@
                     document.getElementById('lastJob').value = data.last_job || '';
                     document.getElementById('status').value = data.status || 'New';
                     document.getElementById('notes').value = data.notes || '';
+                    
+                    // Show modal
                     modal.style.display = 'block';
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     alert('Error fetching customer data');
+                    form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
                 });
         }
 
@@ -195,7 +245,7 @@
         customerForm.onsubmit = function(e) {
             e.preventDefault();
             const customerId = document.getElementById('customerId').value;
-            const data = {
+            const formData = {
                 phone_number: document.getElementById('phone').value,
                 name: document.getElementById('name').value,
                 location: document.getElementById('location').value,
@@ -208,12 +258,17 @@
                 `/api/update-customer/${customerId}` : 
                 '/api/add-customer';
 
+            // Disable form while submitting
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
+
             fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(formData)
             })
             .then(response => response.json())
             .then(data => {
@@ -221,11 +276,15 @@
                     location.reload();
                 } else {
                     alert(data.error || 'An error occurred');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Save Customer';
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('An error occurred while saving');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save Customer';
             });
         };
 
