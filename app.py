@@ -227,7 +227,7 @@ def index():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     # Otherwise show the index page with login/register options
-    return render_template('index.html')
+    return render_template('business_user/business_index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -255,7 +255,7 @@ def register():
         flash('Registration successful')
         return redirect(url_for('login'))
     
-    return render_template('register.html')
+    return render_template('business_user/business_register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
@@ -276,7 +276,7 @@ def login():
         flash('Invalid username or password')
         return redirect(url_for('login'))
 
-    return render_template('login.html')
+    return render_template('business_user/business_login.html')
 
 @app.route('/logout')
 def logout():
@@ -323,7 +323,7 @@ def dashboard():
             }
             formatted_calls.append(call_dict)
 
-        return render_template('dashboard.html', missed_calls=formatted_calls)
+        return render_template('business_user/business_dashboard.html', missed_calls=formatted_calls)
 
     except Exception as e:
         app.logger.error(f"Dashboard error: {str(e)}")
@@ -480,7 +480,7 @@ def update_response():
 @app.route('/about')
 @login_required
 def about():
-    return render_template('about.html')
+    return render_template('business_user/business_about.html')
 
 @app.route('/customers')
 @login_required
@@ -489,7 +489,7 @@ def customers():
     try:
         customers = Customer.query.filter_by(user_id=current_user.id).order_by(Customer.last_updated.desc()).all()
         print(f"Found {len(customers)} customers")  # Debug print
-        return render_template('customerinfo.html', customers=customers)
+        return render_template('business_user/business_customerinfo.html', customers=customers)
     except Exception as e:
         print(f"Error in customers route: {str(e)}")
         return str(e), 500
@@ -641,14 +641,14 @@ def sms_settings():
             
         return redirect(url_for('sms_settings'))
     
-    return render_template('sms-settings.html')
+    return render_template('business_user/business_sms-settings.html')
 
 @app.route('/admin')
 @login_required
 @admin_required
 def admin_dashboard():
     users = User.query.all()
-    return render_template('admin.html', users=users)
+    return render_template('business_user/business_admin.html', users=users)
 
 @app.route('/api/admin/update-user', methods=['POST'])
 @login_required
