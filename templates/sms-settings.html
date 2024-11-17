@@ -46,23 +46,28 @@
                         <h3><i class="fas fa-clock"></i> Работно време</h3>
                     </div>
                     <div class="card-content">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Начало на работния ден:</label>
-                                <input type="time" name="work_start" class="form-control" 
-                                       value="{{ current_user.work_start }}">
+                        <!-- Time Range Container -->
+                        <div class="time-range-container">
+                            <div class="time-input-wrapper">
+                                <label class="time-input-label">Начало на работния ден:</label>
+                                <div class="time-input-field">
+                                    <input type="time" name="work_start" value="{{ current_user.work_start }}">
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label>Край на работния ден:</label>
-                                <input type="time" name="work_end" class="form-control" 
-                                       value="{{ current_user.work_end }}">
+                            <div class="time-input-wrapper">
+                                <label class="time-input-label">Край на работния ден:</label>
+                                <div class="time-input-field">
+                                    <input type="time" name="work_end" value="{{ current_user.work_end }}">
+                                </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Работни дни:</label>
+                        
+                        <!-- Workdays Section -->
+                        <div class="workdays-section">
+                            <label class="workdays-label">Работни дни:</label>
                             <div class="days-grid">
                                 {% for day in ['Пон', 'Вт', 'Ср', 'Чет', 'Пет', 'Съб', 'Нед'] %}
-                                <div class="day-checkbox">
+                                <div class="day-item {% if loop.index0 in current_user.work_days %}selected{% endif %}">
                                     <input type="checkbox" name="work_days" value="{{ loop.index0 }}"
                                            {% if loop.index0 in current_user.work_days %}checked{% endif %}>
                                     <span>{{ day }}</span>
@@ -70,9 +75,11 @@
                                 {% endfor %}
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Съобщение извън работно време:</label>
-                            <textarea name="off_hours_message" class="form-control">{{ current_user.off_hours_message }}</textarea>
+
+                        <!-- Message Section -->
+                        <div class="message-section">
+                            <label class="message-label">Съобщение извън работно време:</label>
+                            <textarea class="message-input" name="off_hours_message">{{ current_user.off_hours_message }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -109,160 +116,4 @@
         </form>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-.settings-card {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 1.5rem;
-}
-
-.card-header {
-    padding: 1rem;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.card-header h3 {
-    margin: 0;
-    color: #2d3748;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.card-content {
-    padding: 1.5rem;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #4a5568;
-    font-weight: 500;
-}
-
-.form-control {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
-    font-size: 0.95rem;
-}
-
-textarea.form-control {
-    min-height: 100px;
-    resize: vertical;
-}
-
-.form-row {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.form-row .form-group {
-    flex: 1;
-}
-
-.days-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-.day-checkbox {
-    text-align: center;
-    padding: 0.5rem;
-    background: #f8fafc;
-    border-radius: 4px;
-}
-
-.toggle-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding: 0.5rem 0;
-}
-
-.toggle-label {
-    font-weight: 500;
-    color: #4a5568;
-}
-
-.form-actions {
-    margin-top: 2rem;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.btn-primary {
-    background: #7360f2;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 4px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-.btn-primary:hover {
-    background: #5b4ac4;
-}
-
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 46px;
-    height: 24px;
-}
-
-.toggle-switch input {
-    display: none;
-}
-
-.toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #e2e8f0;
-    transition: .3s;
-    border-radius: 24px;
-}
-
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .3s;
-    border-radius: 50%;
-}
-
-.toggle-switch input:checked + .toggle-slider {
-    background-color: #7360f2;
-}
-
-.toggle-switch input:checked + .toggle-slider:before {
-    transform: translateX(22px);
-}
-</style>
 {% endblock %}

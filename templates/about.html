@@ -1,123 +1,85 @@
 {% extends "base.html" %}
 
-{% block title %}За нас - MissCall App{% endblock %}
+{% block title %}About MissCall - Smart Call Management{% endblock %}
 
 {% block content %}
-<div class="main-content">
-    <!-- Dashboard Header -->
-    <div class="dashboard-header">
-        <h1>
-            <i class="fas fa-info-circle"></i>
-            За нас
-        </h1>
+<div class="about-container">
+    <div class="about-header">
+        <h1>Welcome to MissCall</h1>
+        <p class="subtitle">Transforming Missed Calls into Business Opportunities</p>
     </div>
 
-    <!-- Main Content Container -->
-    <div class="admin-container">
-        <!-- What is MissCall Section -->
-        <div class="admin-section">
-            <div class="section-header">
-                <h2>
-                    <i class="fas fa-question-circle"></i>
-                    Какво е MissCall?
-                </h2>
+    <div class="features-grid">
+        <!-- Smart Response Feature -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-robot"></i>
             </div>
-            <p class="section-description">
-                MissCall е интелигентно решение, което автоматично изпраща персонализирани SMS съобщения на пропуснати обаждания, помагайки ви да поддържате професионална комуникация с вашите клиенти.
-            </p>
-        </div>
-
-        <!-- Features Section -->
-        <div class="admin-section">
-            <div class="section-header">
-                <h2>
-                    <i class="fas fa-star"></i>
-                    Основни функционалности
-                </h2>
-            </div>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-phone-slash"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Засичане</h3>
-                        <p>Автоматично засича пропуснати обаждания в реално време</p>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-paper-plane"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Изпращане</h3>
-                        <p>Моментално изпраща персонализирано съобщение</p>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Проследяване</h3>
-                        <p>Детайлна статистика за всички съобщения</p>
-                    </div>
-                </div>
+            <div class="feature-content">
+                <h3>Smart Response System</h3>
+                <p>Automated SMS responses ensure no call goes unanswered, maintaining constant communication with your clients.</p>
             </div>
         </div>
 
-        <!-- Benefits Section -->
-        <div class="admin-section">
-            <div class="section-header">
-                <h2>
-                    <i class="fas fa-check-circle"></i>
-                    Защо да изберете MissCall?
-                </h2>
+        <!-- Time Management -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-clock"></i>
             </div>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-phone"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Никога не пропускате важни обаждания</h3>
-                        <p>Автоматичен отговор на всяко пропуснато обаждане</p>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Професионално отношение</h3>
-                        <p>Изградете доверие с вашите клиенти</p>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-sliders-h"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Лесна настройка</h3>
-                        <p>Интуитивен интерфейс и бърза конфигурация</p>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-edit"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Персонализация</h3>
-                        <p>Настройте съобщенията според вашите нужди</p>
-                    </div>
-                </div>
+            <div class="feature-content">
+                <h3>Intelligent Time Management</h3>
+                <p>Set your working hours and let MissCall handle after-hours communication automatically.</p>
             </div>
         </div>
+
+        <!-- Customer Insights -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="feature-content">
+                <h3>Customer Insights</h3>
+                <p>Track and analyze call patterns to better understand your customer communication needs.</p>
+            </div>
+        </div>
+
+        <!-- Customization -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-wand-magic-sparkles"></i>
+            </div>
+            <div class="feature-content">
+                <h3>Full Customization</h3>
+                <p>Personalize your message templates and response settings to match your business voice.</p>
+            </div>
+        </div>
+
+        <!-- Business Integration -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-handshake"></i>
+            </div>
+            <div class="feature-content">
+                <h3>Seamless Integration</h3>
+                <p>Easily integrate MissCall into your existing business workflow without any hassle.</p>
+            </div>
+        </div>
+
+        <!-- Support -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-headset"></i>
+            </div>
+            <div class="feature-content">
+                <h3>24/7 Support</h3>
+                <p>Our dedicated support team is always ready to help you make the most of MissCall.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="about-footer">
+        <h2>Start Transforming Your Customer Communication Today</h2>
+        <p>Join thousands of businesses already using MissCall to enhance their customer service.</p>
     </div>
 </div>
 {% endblock %} 
