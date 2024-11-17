@@ -2,20 +2,24 @@
 
 {% block title %}Customer Information - MissCall App{% endblock %}
 
-{% block header_title %}Customer Information{% endblock %}
-
 {% block content %}
-<div class="container">
-    <!-- Customer List -->
-    <div class="customers-card">
-        <div class="card-header">
-            <h2>Customer List</h2>
-            <button onclick="showAddCustomerModal()" class="add-btn">
-                <i class="fas fa-plus"></i> Add Customer
-            </button>
+<div class="admin-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1>Customer Management</h1>
+    </div>
+
+    <!-- Customer List Section -->
+    <div class="admin-section">
+        <div class="section-header">
+            <h2><i class="fas fa-users"></i> Customer List</h2>
+            <div class="section-actions">
+                <input type="text" id="customerSearch" placeholder="Search customers..." class="search-input">
+            </div>
         </div>
+        
         <div class="table-container">
-            <table>
+            <table class="admin-table">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -29,24 +33,49 @@
                 <tbody>
                     {% for customer in customers %}
                     <tr data-customer-id="{{ customer.id }}">
-                        <td>{{ customer.name or 'N/A' }}</td>
-                        <td>{{ customer.phone_number }}</td>
-                        <td>{{ customer.location or 'N/A' }}</td>
-                        <td>{{ customer.last_job or 'N/A' }}</td>
+                        <td>
+                            <div class="cell-with-icon">
+                                <i class="fas fa-user"></i>
+                                {{ customer.name or 'N/A' }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="cell-with-icon">
+                                <i class="fas fa-phone"></i>
+                                {{ customer.phone_number }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="cell-with-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                                {{ customer.location or 'N/A' }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="cell-with-icon">
+                                <i class="fas fa-briefcase"></i>
+                                {{ customer.last_job or 'N/A' }}
+                            </div>
+                        </td>
                         <td>
                             <span class="status-badge {{ customer.status.lower() }}">
+                                <i class="fas {% if customer.status == 'New' %}fa-star
+                                           {% elif customer.status == 'Regular' %}fa-user-check
+                                           {% else %}fa-crown{% endif %}"></i>
                                 {{ customer.status }}
                             </span>
                         </td>
-                        <td>
-                            <div class="action-buttons">
-                                <button onclick="editCustomer('{{ customer.id }}')" class="action-btn edit">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button onclick="deleteCustomer('{{ customer.id }}')" class="action-btn delete">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
+                        <td class="actions-cell">
+                            <button onclick="editCustomer('{{ customer.id }}')" 
+                                    class="action-btn"
+                                    title="Edit Customer">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteCustomer('{{ customer.id }}')" 
+                                    class="action-btn danger"
+                                    title="Delete Customer">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -56,42 +85,51 @@
     </div>
 </div>
 
-<!-- Add/Edit Customer Modal -->
-<div id="customerModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn">&times;</span>
-        <h2 id="modalTitle">Add Customer</h2>
-        <form id="customerForm">
+<!-- Customer Settings Modal -->
+<div id="customerSettingsModal" class="modal">
+    <div class="modal-content compact">
+        <div class="modal-header">
+            <h2>Customer Settings</h2>
+            <button class="close-btn" onclick="closeSettingsModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <form id="customerSettingsForm" class="compact-form">
             <input type="hidden" id="customerId">
-            <div class="form-group">
-                <label for="phone">Phone Number:</label>
-                <input type="text" id="phone" required>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><i class="fas fa-phone"></i> Phone</label>
+                    <input type="text" id="editPhone" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Name</label>
+                    <input type="text" id="editName">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Location</label>
+                    <input type="text" id="editLocation">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Status</label>
+                    <select id="editStatus">
+                        <option value="New">New</option>
+                        <option value="Regular">Regular</option>
+                        <option value="VIP">VIP</option>
+                    </select>
+                </div>
             </div>
             <div class="form-group">
-                <label for="name">Name:</label>
-                <input type="text" id="name">
+                <label><i class="fas fa-briefcase"></i> Last Job</label>
+                <textarea id="editLastJob" rows="2"></textarea>
             </div>
             <div class="form-group">
-                <label for="location">Location:</label>
-                <input type="text" id="location">
+                <label><i class="fas fa-sticky-note"></i> Notes</label>
+                <textarea id="editNotes" rows="2"></textarea>
             </div>
-            <div class="form-group">
-                <label for="lastJob">Last Job:</label>
-                <textarea id="lastJob"></textarea>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
             </div>
-            <div class="form-group">
-                <label for="status">Status:</label>
-                <select id="status">
-                    <option value="New">New</option>
-                    <option value="Regular">Regular</option>
-                    <option value="VIP">VIP</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="notes">Notes:</label>
-                <textarea id="notes"></textarea>
-            </div>
-            <button type="submit" class="save-btn">Save Customer</button>
         </form>
     </div>
 </div>
@@ -99,149 +137,81 @@
 
 {% block scripts %}
 <script>
-    // Modal functionality
-    const modal = document.getElementById('customerModal');
-    const closeBtn = document.querySelector('.close-btn');
-    const customerForm = document.getElementById('customerForm');
-
-    // Add these styles for the modal
-    const modalStyles = document.createElement('style');
-    modalStyles.textContent = `
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 8px;
-            position: relative;
-        }
-
-        .close-btn {
-            position: absolute;
-            right: 20px;
-            top: 10px;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close-btn:hover {
-            color: #7360f2;
-        }
-    `;
-    document.head.appendChild(modalStyles);
-
-    function showAddCustomerModal() {
-        document.getElementById('modalTitle').textContent = 'Add Customer';
-        document.getElementById('customerId').value = '';
-        customerForm.reset();
-        modal.style.display = 'block';
-    }
-
     function editCustomer(customerId) {
-        document.getElementById('modalTitle').textContent = 'Edit Customer';
-        
-        // Add loading state or disable form while fetching
-        const form = document.getElementById('customerForm');
-        form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = true);
-        
         fetch(`/api/customer/${customerId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                // Enable form elements and populate data
-                form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
-                
                 document.getElementById('customerId').value = customerId;
-                document.getElementById('phone').value = data.phone_number || '';
-                document.getElementById('name').value = data.name || '';
-                document.getElementById('location').value = data.location || '';
-                document.getElementById('lastJob').value = data.last_job || '';
-                document.getElementById('status').value = data.status || 'New';
-                document.getElementById('notes').value = data.notes || '';
+                document.getElementById('editPhone').value = data.phone_number || '';
+                document.getElementById('editName').value = data.name || '';
+                document.getElementById('editLocation').value = data.location || '';
+                document.getElementById('editLastJob').value = data.last_job || '';
+                document.getElementById('editStatus').value = data.status || 'New';
+                document.getElementById('editNotes').value = data.notes || '';
                 
-                // Show modal
-                modal.style.display = 'block';
+                // Show the settings modal
+                document.getElementById('customerSettingsModal').style.display = 'block';
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('Error fetching customer data');
-                form.querySelectorAll('input, textarea, select').forEach(el => el.disabled = false);
             });
     }
 
-    // Close modal when clicking X or outside
-    closeBtn.onclick = function() {
-        modal.style.display = 'none';
+    function closeSettingsModal() {
+        document.getElementById('customerSettingsModal').style.display = 'none';
     }
 
+    // Event listeners for modal closing
     window.onclick = function(event) {
+        const modal = document.getElementById('customerSettingsModal');
         if (event.target == modal) {
-            modal.style.display = 'none';
+            closeSettingsModal();
         }
     }
 
-    // Form submission
-    customerForm.onsubmit = function(e) {
+    // Add keyboard event listener for Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const modal = document.getElementById('customerSettingsModal');
+            if (modal.style.display === 'block') {
+                closeSettingsModal();
+            }
+        }
+    });
+
+    // Handle form submission
+    document.getElementById('customerSettingsForm').onsubmit = function(e) {
         e.preventDefault();
         const customerId = document.getElementById('customerId').value;
-        const formData = {
-            phone_number: document.getElementById('phone').value,
-            name: document.getElementById('name').value,
-            location: document.getElementById('location').value,
-            last_job: document.getElementById('lastJob').value,
-            status: document.getElementById('status').value,
-            notes: document.getElementById('notes').value
+        const data = {
+            phone_number: document.getElementById('editPhone').value,
+            name: document.getElementById('editName').value,
+            location: document.getElementById('editLocation').value,
+            last_job: document.getElementById('editLastJob').value,
+            status: document.getElementById('editStatus').value,
+            notes: document.getElementById('editNotes').value
         };
 
-        const url = customerId ? 
-            `/api/update-customer/${customerId}` : 
-            '/api/add-customer';
-
-        // Disable form while submitting
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Saving...';
-
-        fetch(url, {
+        fetch(`/api/update-customer/${customerId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(data)
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                closeSettingsModal();
                 location.reload();
             } else {
                 alert(data.error || 'An error occurred');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Save Customer';
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('An error occurred while saving');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Save Customer';
         });
     };
 

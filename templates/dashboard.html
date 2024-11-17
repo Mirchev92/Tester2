@@ -3,95 +3,139 @@
 {% block title %}Dashboard - MissCall App{% endblock %}
 
 {% block content %}
-<!-- Stats Overview -->
-<div class="stats-overview">
-    <div class="stat-card">
-        <div class="stat-card-header">
-            <span>Total Missed Calls</span>
-            <i class="fas fa-phone-missed"></i>
-        </div>
-        <div class="stat-card-value">{{ missed_calls|length }}</div>
-    </div>
-    
-    <div class="stat-card">
-        <div class="stat-card-header">
-            <span>Messages Sent</span>
-            <i class="fas fa-paper-plane"></i>
-        </div>
-        <div class="stat-card-value">
-            {{ missed_calls|selectattr('message_sent')|list|length }}
+<div class="admin-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1>Dashboard Overview</h1>
+        <div class="header-actions">
+            <span class="last-updated">Last updated: <time id="update-time">Just now</time></span>
+            <button onclick="location.reload()" class="refresh-btn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
         </div>
     </div>
-    
-    <div class="stat-card">
-        <div class="stat-card-header">
-            <span>Response Rate</span>
-            <i class="fas fa-chart-line"></i>
-        </div>
-        <div class="stat-card-value">
-            {% set response_rate = (missed_calls|selectattr('responded')|list|length / missed_calls|length * 100)|round(1) if missed_calls|length > 0 else 0 %}
-            {{ response_rate }}%
-        </div>
-    </div>
-</div>
 
-<!-- Recent Calls -->
-<div class="calls-section">
-    <h2>Recent Missed Calls</h2>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Name</th>
-                    <th>Caller Number</th>
-                    <th>Message Status</th>
-                    <th>Response</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for call in missed_calls %}
-                <tr>
-                    <td>
-                        <i class="far fa-clock"></i>
-                        {{ call.call_time.strftime('%Y-%m-%d %H:%M:%S') }}
-                    </td>
-                    <td>
-                        <i class="fas fa-user"></i>
-                        {{ call.customer_name if call.customer_name else 'Unknown' }}
-                    </td>
-                    <td>
-                        <i class="fas fa-phone"></i>
-                        {{ call.caller_number }}
-                    </td>
-                    <td>
-                        <span class="status-badge {% if call.message_sent %}success{% else %}error{% endif %}">
-                            <i class="fas {% if call.message_sent %}fa-check{% else %}fa-times{% endif %}"></i>
-                            {{ 'Sent' if call.message_sent else 'Failed' }}
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-phone-missed"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Total Missed Calls</h3>
+                <div class="stat-numbers">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ missed_calls|length }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-paper-plane"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Messages Sent</h3>
+                <div class="stat-numbers">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ missed_calls|selectattr('message_sent')|list|length }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Response Rate</h3>
+                <div class="stat-numbers">
+                    <div class="stat-item">
+                        <span class="stat-value">
+                            {% set response_rate = (missed_calls|selectattr('responded')|list|length / missed_calls|length * 100)|round(1) if missed_calls|length > 0 else 0 %}
+                            {{ response_rate }}%
                         </span>
-                    </td>
-                    <td>
-                        <span class="status-badge {% if call.responded %}success{% else %}pending{% endif %}" id="status-{{ call.id }}">
-                            <i class="fas {% if call.responded %}fa-reply{% else %}fa-clock{% endif %}"></i>
-                            {{ 'Responded' if call.responded else 'Pending' }}
-                        </span>
-                        <input type="checkbox" 
-                               class="response-checkbox" 
-                               data-call-id="{{ call.id }}" 
-                               {% if call.responded %}checked{% endif %}
-                               onchange="updateResponseStatus(this)">
-                    </td>
-                    <td>
-                        <button onclick="saveAsCustomer('{{ call.caller_number }}')" class="action-btn">
-                            <i class="fas fa-user-plus"></i>
-                            Save as Customer
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Calls Section -->
+    <div class="admin-section">
+        <div class="section-header">
+            <h2><i class="fas fa-history"></i> Recent Missed Calls</h2>
+        </div>
+        
+        <div class="table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Name</th>
+                        <th>Caller Number</th>
+                        <th>Message Status</th>
+                        <th>Response</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for call in missed_calls %}
+                    <tr>
+                        <td>
+                            <div class="cell-with-icon">
+                                <i class="far fa-clock"></i>
+                                {{ call.call_time.strftime('%Y-%m-%d %H:%M:%S') }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="cell-with-icon">
+                                <i class="fas fa-user"></i>
+                                {{ call.customer_name if call.customer_name else 'Unknown' }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="cell-with-icon">
+                                <i class="fas fa-phone"></i>
+                                {{ call.caller_number }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="status-badge {% if call.message_sent %}success{% else %}error{% endif %}">
+                                <i class="fas {% if call.message_sent %}fa-check{% else %}fa-times{% endif %}"></i>
+                                {{ 'Sent' if call.message_sent else 'Failed' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="response-cell">
+                                <span class="status-badge {% if call.responded %}success{% else %}pending{% endif %}" 
+                                      id="status-{{ call.id }}">
+                                    <i class="fas {% if call.responded %}fa-reply{% else %}fa-clock{% endif %}"></i>
+                                    {{ 'Responded' if call.responded else 'Pending' }}
+                                </span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" 
+                                           data-call-id="{{ call.id }}" 
+                                           {% if call.responded %}checked{% endif %}
+                                           onchange="updateResponseStatus(this)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </td>
+                        <td>
+                            <button onclick="saveAsCustomer('{{ call.caller_number }}')" 
+                                    class="action-btn primary">
+                                <i class="fas fa-user-plus"></i>
+                                Save as Customer
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

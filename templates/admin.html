@@ -2,135 +2,216 @@
 
 {% block title %}Admin Dashboard - MissCall App{% endblock %}
 
-{% block header_title %}Admin Dashboard{% endblock %}
-
 {% block content %}
-<div class="admin-section">
-    <h2>User Management</h2>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Username</th>
-                    <th>Phone Number</th>
-                    <th>SMS Enabled</th>
-                    <th>Admin Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                <tr>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.phone_number }}</td>
-                    <td>
-                        <input type="checkbox" 
-                               {% if user.sms_enabled %}checked{% endif %}
-                               onchange="updateUserSetting('{{ user.id }}', 'sms_enabled', this.checked)"
-                               {% if user.id == current_user.id %}disabled{% endif %}>
-                    </td>
-                    <td>
-                        <input type="checkbox" 
-                               {% if user.is_admin %}checked{% endif %}
-                               onchange="updateUserSetting('{{ user.id }}', 'is_admin', this.checked)"
-                               {% if user.id == current_user.id %}disabled{% endif %}>
-                    </td>
-                    <td>
-                        <button onclick="resetUserPassword('{{ user.id }}')" 
-                                class="action-btn"
-                                {% if user.id == current_user.id %}disabled{% endif %}>
-                            Reset Password
-                        </button>
-                        <button onclick="deleteUser('{{ user.id }}')" 
-                                class="action-btn danger"
-                                {% if user.id == current_user.id %}disabled{% endif %}>
-                            Delete
-                        </button>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="admin-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <div class="header-actions">
+            <span class="last-updated">Last updated: <time id="update-time">Just now</time></span>
+            <button onclick="refreshDashboard()" class="refresh-btn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
     </div>
-</div>
 
-<div class="admin-section">
-    <h2>System Overview</h2>
+    <!-- Stats Overview -->
     <div class="stats-grid">
         <div class="stat-card">
-            <h3>Users</h3>
-            <div class="stat-content">
-                <p>Total: <span id="total-users">Loading...</span></p>
-                <p>Active: <span id="active-users">Loading...</span></p>
-                <p>Inactive: <span id="inactive-users">Loading...</span></p>
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-details">
+                <h3>Users Overview</h3>
+                <div class="stat-numbers">
+                    <div class="stat-item">
+                        <span class="stat-label">Total</span>
+                        <span class="stat-value" id="total-users">Loading...</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Active</span>
+                        <span class="stat-value" id="active-users">Loading...</span>
+                    </div>
+                </div>
             </div>
         </div>
+
         <div class="stat-card">
-            <h3>SMS Statistics</h3>
-            <div class="stat-content">
-                <p>Total Calls: <span id="total-calls">Loading...</span></p>
-                <p>SMS Sent: <span id="total-sms">Loading...</span></p>
+            <div class="stat-icon">
+                <i class="fas fa-comment-alt"></i>
+            </div>
+            <div class="stat-details">
+                <h3>SMS Activity</h3>
+                <div class="stat-numbers">
+                    <div class="stat-item">
+                        <span class="stat-label">Total Calls</span>
+                        <span class="stat-value" id="total-calls">Loading...</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">SMS Sent</span>
+                        <span class="stat-value" id="total-sms">Loading...</span>
+                    </div>
+                </div>
             </div>
         </div>
+
         <div class="stat-card">
-            <h3>System Health</h3>
-            <div class="stat-content">
-                <p>CPU Usage: <span id="cpu-usage">Loading...</span></p>
-                <p>Memory Usage: <span id="memory-usage">Loading...</span></p>
-                <p>SMS Service: <span id="sms-status">Loading...</span></p>
+            <div class="stat-icon">
+                <i class="fas fa-server"></i>
+            </div>
+            <div class="stat-details">
+                <h3>System Health</h3>
+                <div class="stat-numbers">
+                    <div class="stat-item">
+                        <span class="stat-label">CPU</span>
+                        <span class="stat-value" id="cpu-usage">Loading...</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Memory</span>
+                        <span class="stat-value" id="memory-usage">Loading...</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="admin-section">
-    <h2>User Activity Log</h2>
-    <select id="selected-user" onchange="updateActivityLog()">
-        <option value="">Select User</option>
-        {% for user in users %}
-        <option value="{{ user.id }}">{{ user.username }}</option>
-        {% endfor %}
-    </select>
-    <div class="activity-log-section">
-        <h3>User Activity Log</h3>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Username</th>
-                    <th>Action</th>
-                    <th>Time</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
-            <tbody id="activity-log">
-                <!-- Will be populated via JavaScript -->
-            </tbody>
-        </table>
+    <!-- User Management Section -->
+    <div class="admin-section">
+        <div class="section-header">
+            <h2><i class="fas fa-users"></i> User Management</h2>
+            <select id="user-select" class="user-select" onchange="filterUsers(this.value)">
+                <option value="">Select User</option>
+                {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="table-container">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Phone Number</th>
+                        <th>SMS Status</th>
+                        <th>Admin Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            <div class="user-info" data-user-id="{{ user.id }}">
+                                <span class="user-avatar">{{ user.username[0] | upper }}</span>
+                                <span class="user-name">{{ user.username }}</span>
+                            </div>
+                        </td>
+                        <td>{{ user.phone_number }}</td>
+                        <td>
+                            <label class="toggle-switch">
+                                <input type="checkbox" 
+                                       {% if user.sms_enabled %}checked{% endif %}
+                                       onchange="updateUserSetting('{{ user.id }}', 'sms_enabled', this.checked)"
+                                       {% if user.id == current_user.id %}disabled{% endif %}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </td>
+                        <td>
+                            <label class="toggle-switch">
+                                <input type="checkbox" 
+                                       {% if user.is_admin %}checked{% endif %}
+                                       onchange="updateUserSetting('{{ user.id }}', 'is_admin', this.checked)"
+                                       {% if user.id == current_user.id %}disabled{% endif %}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </td>
+                        <td class="actions-cell">
+                            <button onclick="resetUserPassword('{{ user.id }}')" 
+                                    class="action-btn"
+                                    {% if user.id == current_user.id %}disabled{% endif %}
+                                    title="Reset Password">
+                                <i class="fas fa-key"></i>
+                            </button>
+                            <button onclick="deleteUser('{{ user.id }}')" 
+                                    class="action-btn danger"
+                                    {% if user.id == current_user.id %}disabled{% endif %}
+                                    title="Delete User">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
 
-<div class="admin-section">
-    <h2>SMS Template Management</h2>
-    <select id="template-user-select">
-        <option value="">Select User</option>
-        {% for user in users %}
-        <option value="{{ user.id }}">{{ user.username }}</option>
-        {% endfor %}
-    </select>
-    <div class="template-editor">
-        <div class="template-group">
-            <label>Default Template</label>
-            <textarea id="default-template" rows="3"></textarea>
+    <!-- Activity Log Section -->
+    <div class="admin-section">
+        <div class="section-header">
+            <h2><i class="fas fa-history"></i> Activity Log</h2>
+            <select id="selected-user" onchange="updateActivityLog()" class="user-select">
+                <option value="">All Users</option>
+                {% for user in users %}
+                <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+            </select>
         </div>
-        <div class="template-group">
-            <label>Off Hours Message</label>
-            <textarea id="off-hours-template" rows="3"></textarea>
+        
+        <div class="activity-log">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Time</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody id="activity-log">
+                    <!-- Populated via JavaScript -->
+                </tbody>
+            </table>
         </div>
-        <div class="template-group">
-            <label>Vacation Message</label>
-            <textarea id="vacation-template" rows="3"></textarea>
+    </div>
+
+    <!-- SMS Template Management -->
+    <div class="admin-section">
+        <div class="section-header">
+            <h2><i class="fas fa-envelope"></i> SMS Templates</h2>
+            <select id="template-user-select" class="user-select">
+                <option value="">Select User</option>
+                {% for user in users %}
+                <option value="{{ user.id }}">{{ user.username }}</option>
+                {% endfor %}
+            </select>
         </div>
-        <button onclick="saveTemplates()">Save Templates</button>
+        
+        <div class="template-editor">
+            <div class="template-grid">
+                <div class="template-card">
+                    <h3>Default Template</h3>
+                    <textarea id="default-template" rows="3" 
+                              placeholder="Enter default message template..."></textarea>
+                </div>
+                <div class="template-card">
+                    <h3>Off Hours Message</h3>
+                    <textarea id="off-hours-template" rows="3"
+                              placeholder="Enter off-hours message..."></textarea>
+                </div>
+                <div class="template-card">
+                    <h3>Vacation Message</h3>
+                    <textarea id="vacation-template" rows="3"
+                              placeholder="Enter vacation message..."></textarea>
+                </div>
+            </div>
+            <div class="template-actions">
+                <button onclick="saveTemplates()" class="save-templates-btn">
+                    <i class="fas fa-save"></i> Save Templates
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -292,6 +373,29 @@
                     </tr>
                 `).join('');
             });
+    }
+
+    function filterUsers(userId) {
+        // Get all table rows
+        const rows = document.querySelectorAll('.admin-table tbody tr');
+        
+        if (!userId) {
+            // If no user selected (i.e., "Select User" option), show all rows
+            rows.forEach(row => {
+                row.style.display = '';
+            });
+            return;
+        }
+        
+        // Hide all rows first
+        rows.forEach(row => {
+            const rowUserId = row.querySelector('.user-info').getAttribute('data-user-id');
+            if (rowUserId === userId) {
+                row.style.display = ''; // Show matching row
+            } else {
+                row.style.display = 'none'; // Hide non-matching rows
+            }
+        });
     }
 
     // Load initial data

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, make_response, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -19,6 +19,10 @@ import psutil
 from logging.handlers import RotatingFileHandler
 from sqlalchemy import or_
 import pytz
+from colorama import init, Fore
+
+# Initialize colorama
+init()
 
 # Set up logging configuration
 logging.basicConfig(
@@ -219,6 +223,10 @@ def admin_required(f):
 # Routes
 @app.route('/')
 def index():
+    # If user is authenticated, redirect to dashboard
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    # Otherwise show the index page with login/register options
     return render_template('index.html')
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -252,46 +260,29 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
 def login():
+    # If user is already authenticated, redirect to dashboard
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
-            login_user(user, remember=True)
-            
-            # Log login activity
-            activity = UserActivity(
-                user_id=user.id,
-                action='login',
-                details=f'User logged in from IP: {request.remote_addr}'
-            )
-            db.session.add(activity)
-            db.session.commit()
-            
+            login_user(user)
             return redirect(url_for('dashboard'))
             
-        # Add flash message for failed login
         flash('Invalid username or password')
         return redirect(url_for('login'))
 
-    # GET request - show login form    
     return render_template('login.html')
 
 @app.route('/logout')
-@login_required
 def logout():
     if current_user.is_authenticated:
-        # Log logout activity
-        activity = UserActivity(
-            user_id=current_user.id,
-            action='logout',
-            details='User logged out'
-        )
-        db.session.add(activity)
-        db.session.commit()
-        
-    logout_user()
+        logout_user()
+        session.clear()
     return redirect(url_for('index'))
 
 def is_saved_customer(phone_number):
@@ -300,8 +291,10 @@ def is_saved_customer(phone_number):
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+        
     try:
-        # Get missed calls with customer information using a single query
         missed_calls = db.session.query(
             MissedCall,
             Customer
@@ -317,7 +310,6 @@ def dashboard():
             MissedCall.call_time.desc()
         ).all()
 
-        # Format the results
         formatted_calls = []
         for call, customer in missed_calls:
             call_dict = {
@@ -334,9 +326,7 @@ def dashboard():
         return render_template('dashboard.html', missed_calls=formatted_calls)
 
     except Exception as e:
-        # Log the error
         app.logger.error(f"Dashboard error: {str(e)}")
-        # Return the 500 error page
         return render_template('errors/500.html'), 500
 
 # API Routes
@@ -943,7 +933,7 @@ def log_user_activity(user_id, action, details=None):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    print("\nRegistered Routes:")
-    for rule in app.url_map.iter_rules():
-        print(f"{rule.endpoint}: {rule.rule}")
+    print("\n" + "=" * 70)
+    print(Fore.GREEN + "Server is running on: http://127.0.0.1:5000" + Fore.RESET)
+    print("=" * 70 + "\n")
     app.run(debug=True)

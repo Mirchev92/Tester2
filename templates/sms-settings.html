@@ -2,21 +2,27 @@
 
 {% block title %}SMS Settings - MissCall App{% endblock %}
 
-{% block header_title %}SMS Settings{% endblock %}
-
 {% block content %}
-<div class="settings-container animate-fade-in">
-    <div class="settings-section">
-        <h2>SMS Настройки</h2>
-        <div class="settings-content">
-            <form method="POST" class="sms-settings-form">
-                <!-- SMS Toggle Section -->
-                <div class="setting-block">
-                    <div class="setting-header" onclick="toggleSection('sms-section')">
-                        <h3>Автоматични SMS-и</h3>
-                        <i class="fas fa-chevron-down"></i>
+<div class="admin-container">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1>SMS Settings</h1>
+    </div>
+
+    <!-- SMS Settings Section -->
+    <div class="admin-section">
+        <div class="section-header">
+            <h2><i class="fas fa-sms"></i> SMS Configuration</h2>
+        </div>
+
+        <form method="POST" class="settings-form">
+            <div class="settings-grid">
+                <!-- Automatic SMS Section -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-paper-plane"></i> Автоматични SMS-и</h3>
                     </div>
-                    <div class="setting-content" id="sms-section">
+                    <div class="card-content">
                         <div class="setting-item">
                             <div class="toggle-wrapper">
                                 <span class="toggle-label">Активиране на автоматични SMS-и</span>
@@ -26,59 +32,57 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
-                            <div class="template-container">
+                            <div class="form-group">
                                 <label>Шаблон на съобщението:</label>
-                                <textarea name="sms_template" rows="3">{{ current_user.sms_template }}</textarea>
+                                <textarea name="sms_template" class="form-control">{{ current_user.sms_template }}</textarea>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Working Hours Section -->
-                <div class="setting-block">
-                    <div class="setting-header" onclick="toggleSection('hours-section')">
-                        <h3>Работно време</h3>
-                        <i class="fas fa-chevron-down"></i>
+                <div class="settings-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-clock"></i> Работно време</h3>
                     </div>
-                    <div class="setting-content" id="hours-section">
-                        <div class="setting-item">
-                            <div class="time-inputs">
-                                <div class="time-field">
-                                    <label>Начало на работния ден:</label>
-                                    <input type="time" name="work_start" value="{{ current_user.work_start }}">
-                                </div>
-                                <div class="time-field">
-                                    <label>Край на работния ден:</label>
-                                    <input type="time" name="work_end" value="{{ current_user.work_end }}">
-                                </div>
+                    <div class="card-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Начало на работния ден:</label>
+                                <input type="time" name="work_start" class="form-control" 
+                                       value="{{ current_user.work_start }}">
                             </div>
-                            <div class="working-days">
-                                <label>Работни дни:</label>
-                                <div class="days-grid">
-                                    {% for day in ['Пон', 'Вт', 'Ср', 'Чет', 'Пет', 'Съб', 'Нед'] %}
-                                    <div class="day-checkbox">
-                                        <input type="checkbox" name="work_days" value="{{ loop.index0 }}"
-                                               {% if loop.index0 in current_user.work_days %}checked{% endif %}>
-                                        <span>{{ day }}</span>
-                                    </div>
-                                    {% endfor %}
+                            <div class="form-group">
+                                <label>Край на работния ден:</label>
+                                <input type="time" name="work_end" class="form-control" 
+                                       value="{{ current_user.work_end }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Работни дни:</label>
+                            <div class="days-grid">
+                                {% for day in ['Пон', 'Вт', 'Ср', 'Чет', 'Пет', 'Съб', 'Нед'] %}
+                                <div class="day-checkbox">
+                                    <input type="checkbox" name="work_days" value="{{ loop.index0 }}"
+                                           {% if loop.index0 in current_user.work_days %}checked{% endif %}>
+                                    <span>{{ day }}</span>
                                 </div>
+                                {% endfor %}
                             </div>
-                            <div class="template-container">
-                                <label>Съобщение извън работно време:</label>
-                                <textarea name="off_hours_message" rows="3">{{ current_user.off_hours_message }}</textarea>
-                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Съобщение извън работно време:</label>
+                            <textarea name="off_hours_message" class="form-control">{{ current_user.off_hours_message }}</textarea>
                         </div>
                     </div>
                 </div>
 
                 <!-- Vacation Mode Section -->
-                <div class="setting-block">
-                    <div class="setting-header" onclick="toggleSection('vacation-section')">
-                        <h3>Режим "Отпуск"</h3>
-                        <i class="fas fa-chevron-down"></i>
+                <div class="settings-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-umbrella-beach"></i> Режим "Отпуск"</h3>
                     </div>
-                    <div class="setting-content" id="vacation-section">
+                    <div class="card-content">
                         <div class="setting-item">
                             <div class="toggle-wrapper">
                                 <span class="toggle-label">Активиране на режим "Отпуск"</span>
@@ -88,58 +92,97 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
-                            <div class="template-container">
+                            <div class="form-group">
                                 <label>Съобщение за отпуск:</label>
-                                <textarea name="vacation_message" rows="3">{{ current_user.vacation_message }}</textarea>
+                                <textarea name="vacation_message" class="form-control">{{ current_user.vacation_message }}</textarea>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <button type="submit" class="save-btn">
-                    <i class="fas fa-save"></i>
-                    Запази настройките
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Запази настройките
                 </button>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-/* SMS Settings Specific Styles */
-.settings-container {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-}
-
-.settings-section {
+.settings-card {
     background: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    padding: 2rem;
+    margin-bottom: 1.5rem;
 }
 
-.setting-block {
-    margin-bottom: 2rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-}
-
-.setting-header {
+.card-header {
     padding: 1rem;
-    background: #f8fafc;
-    border-radius: 8px 8px 0 0;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
 }
 
-.setting-content {
+.card-header h3 {
+    margin: 0;
+    color: #2d3748;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-content {
     padding: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+textarea.form-control {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.day-checkbox {
+    text-align: center;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-radius: 4px;
 }
 
 .toggle-wrapper {
@@ -147,31 +190,79 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1rem;
+    padding: 0.5rem 0;
+}
+
+.toggle-label {
+    font-weight: 500;
+    color: #4a5568;
+}
+
+.form-actions {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-primary {
+    background: #7360f2;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background: #5b4ac4;
 }
 
 .toggle-switch {
     position: relative;
     display: inline-block;
-    width: 60px;
-    height: 34px;
+    width: 46px;
+    height: 24px;
 }
 
-/* Add your existing SMS settings styles here */
+.toggle-switch input {
+    display: none;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e2e8f0;
+    transition: .3s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: #7360f2;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
 </style>
-{% endblock %}
-
-{% block scripts %}
-<script>
-function toggleSection(sectionId) {
-    const section = document.getElementById(sectionId);
-    const header = section.previousElementSibling;
-    const icon = header.querySelector('i');
-    
-    section.classList.toggle('collapsed');
-    icon.classList.toggle('fa-chevron-down');
-    icon.classList.toggle('fa-chevron-up');
-}
-
-// Add your existing JavaScript here
-</script>
 {% endblock %}

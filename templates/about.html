@@ -2,81 +2,118 @@
 
 {% block title %}За нас - MissCall App{% endblock %}
 
-{% block header_title %}За нас{% endblock %}
-
 {% block content %}
-<div class="container">
-    <div class="about-page">
-        <div class="about-hero">
-            <h1>Добре дошли в MissCall</h1>
-            <p class="hero-subtitle">Автоматизирайте вашата комуникация с клиенти</p>
+<div class="main-content">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header">
+        <h1>
+            <i class="fas fa-info-circle"></i>
+            За нас
+        </h1>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="admin-container">
+        <!-- What is MissCall Section -->
+        <div class="admin-section">
+            <div class="section-header">
+                <h2>
+                    <i class="fas fa-question-circle"></i>
+                    Какво е MissCall?
+                </h2>
+            </div>
+            <p class="section-description">
+                MissCall е интелигентно решение, което автоматично изпраща персонализирани SMS съобщения на пропуснати обаждания, помагайки ви да поддържате професионална комуникация с вашите клиенти.
+            </p>
         </div>
 
-        <div class="about-grid">
-            <!-- What is MissCall Section -->
-            <div class="about-card main-card">
-                <h2>Какво е MissCall?</h2>
-                <p>MissCall е интелигентно решение, което автоматично изпраща персонализирани SMS съобщения на пропуснати обаждания, помагайки ви да поддържате професионална комуникация с вашите клиенти.</p>
+        <!-- Features Section -->
+        <div class="admin-section">
+            <div class="section-header">
+                <h2>
+                    <i class="fas fa-star"></i>
+                    Основни функционалности
+                </h2>
             </div>
-
-            <!-- How it Works Section -->
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
                         <i class="fas fa-phone-slash"></i>
                     </div>
-                    <h3>Засичане</h3>
-                    <p>Автоматично засича пропуснати обаждания в реално време</p>
+                    <div class="stat-details">
+                        <h3>Засичане</h3>
+                        <p>Автоматично засича пропуснати обаждания в реално време</p>
+                    </div>
                 </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
+
+                <div class="stat-card">
+                    <div class="stat-icon">
                         <i class="fas fa-paper-plane"></i>
                     </div>
-                    <h3>Изпращане</h3>
-                    <p>Моментално изпраща персонализирано съобщение</p>
+                    <div class="stat-details">
+                        <h3>Изпращане</h3>
+                        <p>Моментално изпраща персонализирано съобщение</p>
+                    </div>
                 </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">
+
+                <div class="stat-card">
+                    <div class="stat-icon">
                         <i class="fas fa-chart-line"></i>
                     </div>
-                    <h3>Проследяване</h3>
-                    <p>Детайлна статистика за всички съобщения</p>
+                    <div class="stat-details">
+                        <h3>Проследяване</h3>
+                        <p>Детайлна статистика за всички съобщения</p>
+                    </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Benefits Section -->
-            <div class="benefits-section">
-                <h2>Защо да изберете MissCall?</h2>
-                <div class="benefits-grid">
-                    <div class="benefit-item">
-                        <i class="fas fa-check-circle"></i>
-                        <div class="benefit-content">
-                            <h4>Никога не пропускате важни обаждания</h4>
-                            <p>Автоматичен отговор на всяко пропуснато обаждане</p>
-                        </div>
+        <!-- Benefits Section -->
+        <div class="admin-section">
+            <div class="section-header">
+                <h2>
+                    <i class="fas fa-check-circle"></i>
+                    Защо да изберете MissCall?
+                </h2>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-phone"></i>
                     </div>
-                    <div class="benefit-item">
+                    <div class="stat-details">
+                        <h3>Никога не пропускате важни обаждания</h3>
+                        <p>Автоматичен отговор на всяко пропуснато обаждане</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
                         <i class="fas fa-users"></i>
-                        <div class="benefit-content">
-                            <h4>Професионално отношение</h4>
-                            <p>Изградете доверие с вашите клиенти</p>
-                        </div>
                     </div>
-                    <div class="benefit-item">
+                    <div class="stat-details">
+                        <h3>Професионално отношение</h3>
+                        <p>Изградете доверие с вашите клиенти</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
                         <i class="fas fa-sliders-h"></i>
-                        <div class="benefit-content">
-                            <h4>Лесна настройка</h4>
-                            <p>Интуитивен интерфейс и бърза конфигурация</p>
-                        </div>
                     </div>
-                    <div class="benefit-item">
+                    <div class="stat-details">
+                        <h3>Лесна настройка</h3>
+                        <p>Интуитивен интерфейс и бърза конфигурация</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
                         <i class="fas fa-edit"></i>
-                        <div class="benefit-content">
-                            <h4>Персонализация</h4>
-                            <p>Настройте съобщенията според вашите нужди</p>
-                        </div>
+                    </div>
+                    <div class="stat-details">
+                        <h3>Персонализация</h3>
+                        <p>Настройте съобщенията според вашите нужди</p>
                     </div>
                 </div>
             </div>
