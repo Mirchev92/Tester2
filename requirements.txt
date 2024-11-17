@@ -7,3 +7,5 @@ flask-limiter
 requests
 Werkzeug
 python-dotenv
+psutil
+pytz
