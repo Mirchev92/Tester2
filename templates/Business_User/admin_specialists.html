@@ -1,0 +1,84 @@
+{% extends "Business_User/business_base.html" %}
+{% block content %}
+
+<div class="admin-container">
+    <div class="dashboard-header">
+        <h1>Specialists Management</h1>
+        <div class="header-actions">
+            <span class="last-updated">Last updated: Just now</span>
+            <button class="refresh-btn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="specialists-grid">
+        {% for specialist in specialists %}
+        <div class="specialist-card">
+            <div class="specialist-header">
+                <div class="specialist-avatar">
+                    {% if specialist.profile_picture %}
+                        <img src="{{ url_for('static', filename='uploads/' + specialist.profile_picture) }}" 
+                             alt="{{ specialist.username }}'s profile"
+                             class="profile-image"
+                             onerror="this.src='/static/images/default-avatar.png'">
+                    {% else %}
+                        <i class="fas fa-user"></i>
+                    {% endif %}
+                </div>
+     
+                <div class="specialist-status {% if specialist.is_online %}online{% else %}offline{% endif %}">
+                    {{ "Online" if specialist.is_online else "Offline" }}
+                </div>
+            </div>
+     
+            <div class="specialist-info">
+                <h3>{{ specialist.username }}</h3>
+                <div class="rating-display">
+                    {% for i in range(5) %}
+                        <i class="fa{{ 's' if i < specialist.rating|round|int else 'r' }} fa-star"></i>
+                    {% endfor %}
+                    <span>({{ specialist.reviews_count }} reviews)</span>
+                </div>
+                <p><i class="fas fa-tools"></i> {{ specialist.specialization or 'Not specified' }}</p>
+                <p><i class="fas fa-map-marker-alt"></i> {{ specialist.location or 'Location not specified' }}</p>
+                <p><i class="far fa-clock"></i> {{ specialist.working_hours_start }} - {{ specialist.working_hours_end }}</p>
+                <p><i class="far fa-calendar"></i> {{ specialist.working_days }}</p>
+            </div>
+
+            <div class="specialist-stats">
+                <div class="stat">
+                    <span class="stat-value">{{ specialist.completed_jobs }}</span>
+                    <span class="stat-label">Jobs Done</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">{{ specialist.response_rate }}%</span>
+                    <span class="stat-label">Response Rate</span>
+                </div>
+            </div>
+
+            <div class="specialist-actions">
+                <button type="button" onclick="viewSpecialistProfile('{{ specialist.id }}')" class="action-btn primary">
+                    <i class="far fa-eye"></i> View Profile
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Profile Modal -->
+<div id="profileModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeProfileModal()">&times;</span>
+        <div class="profile-details">
+            <div id="modalContent"></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='css/js/customer_scripts.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,179 @@
+Updated: 2024-12-07 17:57:00
+--------------------------------------------------
+Total Users: 27
+--------------------------------------------------
+
+ID: 1
+Username: damirche
+User Type: business
+Phone: +359889665486
+Last Seen: 2024-12-04 23:55:42.454162
+Specialization: Electrician
+Location: Sofia
+------------------------------
+ID: 2
+Username: 123123
+User Type: None
+Phone: +359889665486
+Last Seen: None
+------------------------------
+ID: 3
+Username: DanailMirchev
+User Type: None
+Phone: +359888888888
+Last Seen: 2024-11-16 21:14:32.050524
+------------------------------
+ID: 4
+Username: Desi
+User Type: None
+Phone: +359999999999
+Last Seen: None
+------------------------------
+ID: 5
+Username: Mirchev92
+User Type: customer
+Phone: +359889665486
+Last Seen: 2024-11-20 15:50:43.106023
+------------------------------
+ID: 6
+Username: Mirchev922
+User Type: customer
+Phone: +359333333333
+Last Seen: 2024-11-20 18:44:17.748750
+------------------------------
+ID: 7
+Username: Mirchev9222
+User Type: customer
+Phone: +359889665486
+Last Seen: 2024-11-20 18:39:14.976741
+------------------------------
+ID: 8
+Username: test123
+User Type: customer
+Phone: +359889665486
+Last Seen: 2024-12-04 23:55:37.890630
+------------------------------
+ID: 9
+Username: Test321
+User Type: business
+Phone: +359889665486
+Last Seen: 2024-11-27 20:36:45.545466
+Specialization: 
+Location: 
+------------------------------
+ID: 10
+Username: OMG123
+User Type: business
+Phone: +359889665486
+Last Seen: 2024-11-27 23:51:50.055114
+Specialization: 
+Location: 
+------------------------------
+ID: 11
+Username: kurec
+User Type: business
+Phone: +359889665486
+Last Seen: None
+Specialization: None
+Location: None
+------------------------------
+ID: 12
+Username: dasdas
+User Type: business
+Phone: +359889665486
+Last Seen: None
+Specialization: None
+Location: None
+------------------------------
+ID: 17
+Username: guest_20241129213759
+User Type: customer
+Phone: pending_update
+Last Seen: None
+------------------------------
+ID: 18
+Username: guest_20241129213836
+User Type: customer
+Phone: pending_update
+Last Seen: None
+------------------------------
+ID: 19
+Username: guest_20241129213841
+User Type: customer
+Phone: pending_update
+Last Seen: None
+------------------------------
+ID: 20
+Username: guest_20241129213958
+User Type: customer
+Phone: pending_update
+Last Seen: None
+------------------------------
+ID: 21
+Username: guest_20241129214237
+User Type: customer
+Phone: pending_update
+Last Seen: None
+------------------------------
+ID: 22
+Username: guest_20241129214412
+User Type: customer
+Phone: pending
+Last Seen: None
+------------------------------
+ID: 23
+Username: guest_20241129214700
+User Type: customer
+Phone: pending
+Last Seen: None
+------------------------------
+ID: 24
+Username: guest_20241201195313
+User Type: customer
+Phone: pending
+Last Seen: 2024-12-01 17:53:55.320885
+------------------------------
+ID: 25
+Username: guest_20241201204935
+User Type: customer
+Phone: pending
+Last Seen: 2024-12-01 18:56:29.810409
+------------------------------
+ID: 26
+Username: guest_20241201205649
+User Type: customer
+Phone: pending
+Last Seen: 2024-12-01 18:56:53.115073
+------------------------------
+ID: 27
+Username: guest_20241201205658
+User Type: customer
+Phone: pending
+Last Seen: 2024-12-01 19:01:08.147710
+------------------------------
+ID: 28
+Username: guest_20241201210114
+User Type: customer
+Phone: pending
+Last Seen: 2024-12-01 19:01:17.891185
+------------------------------
+ID: 29
+Username: guest_20241201210144
+User Type: customer
+Phone: pending
+Last Seen: 2024-12-01 19:01:48.794878
+------------------------------
+ID: 30
+Username: guest_20241202204345
+User Type: customer
+Phone: pending
+Last Seen: 2024-12-02 18:43:58.460703
+------------------------------
+ID: 31
+Username: test!
+User Type: business
+Phone: +359889665486
+Last Seen: None
+Specialization: None
+Location: None
+------------------------------

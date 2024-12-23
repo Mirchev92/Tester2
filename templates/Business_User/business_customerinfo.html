@@ -1,4 +1,4 @@
-{% extends "business_user/business_base.html" %}
+{% extends "Business_user/business_base.html" %}
 
 {% block title %}Customer Information - MissCall App{% endblock %}
 
@@ -86,18 +86,20 @@
 </div>
 
 <!-- Customer Settings Modal -->
-<div id="customerSettingsModal" class="modal">
+<div id="customerSettingsModal" class="modal" style="display: none;">
     <div class="modal-content compact">
         <div class="modal-header">
-            <h2>Customer Settings</h2>
-            <button class="close-btn" onclick="closeSettingsModal()"><i class="fas fa-times"></i></button>
+            <h2><i class="fas fa-user-edit"></i> Customer Settings</h2>
+            <button type="button" class="close-btn" onclick="closeSettingsModal()">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
         <form id="customerSettingsForm" class="compact-form">
             <input type="hidden" id="customerId">
             <div class="form-row">
                 <div class="form-group">
                     <label><i class="fas fa-phone"></i> Phone</label>
-                    <input type="text" id="editPhone" required>
+                    <input type="text" id="editPhone" required pattern="[0-9+]+" title="Please enter a valid phone number">
                 </div>
                 <div class="form-group">
                     <label><i class="fas fa-user"></i> Name</label>
@@ -128,7 +130,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
             </div>
         </form>
     </div>
@@ -137,40 +141,154 @@
 
 {% block scripts %}
 <script>
-    function editCustomer(customerId) {
-        fetch(`/api/customer/${customerId}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('customerId').value = customerId;
-                document.getElementById('editPhone').value = data.phone_number || '';
-                document.getElementById('editName').value = data.name || '';
-                document.getElementById('editLocation').value = data.location || '';
-                document.getElementById('editLastJob').value = data.last_job || '';
-                document.getElementById('editStatus').value = data.status || 'New';
-                document.getElementById('editNotes').value = data.notes || '';
-                
-                // Show the settings modal
-                document.getElementById('customerSettingsModal').style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error fetching customer data');
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize search functionality
+    const searchInput = document.getElementById('customerSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('.admin-table tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
             });
+        });
     }
 
-    function closeSettingsModal() {
-        document.getElementById('customerSettingsModal').style.display = 'none';
+    // Initialize form validation
+    const form = document.getElementById('customerSettingsForm');
+    if (form) {
+        form.addEventListener('submit', handleFormSubmit);
     }
 
-    // Event listeners for modal closing
+    // Initialize modal close handlers
+    initializeModalHandlers();
+});
+
+function editCustomer(customerId) {
+    const modal = document.getElementById('customerSettingsModal');
+    
+    // Show loading state
+    modal.style.display = 'block';
+    clearForm();
+    
+    fetch(`/api/customer/${customerId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            populateForm(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Error fetching customer data');
+            closeSettingsModal();
+        });
+}
+
+function populateForm(data) {
+    document.getElementById('customerId').value = data.id;
+    document.getElementById('editPhone').value = data.phone_number || '';
+    document.getElementById('editName').value = data.name || '';
+    document.getElementById('editLocation').value = data.location || '';
+    document.getElementById('editLastJob').value = data.last_job || '';
+    document.getElementById('editStatus').value = data.status || 'New';
+    document.getElementById('editNotes').value = data.notes || '';
+}
+
+function clearForm() {
+    const form = document.getElementById('customerSettingsForm');
+    form.reset();
+    document.getElementById('customerId').value = '';
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('customerSettingsModal');
+    modal.style.display = 'none';
+    clearForm();
+}
+
+function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const customerId = document.getElementById('customerId').value;
+    const data = {
+        phone_number: document.getElementById('editPhone').value,
+        name: document.getElementById('editName').value,
+        location: document.getElementById('editLocation').value,
+        last_job: document.getElementById('editLastJob').value,
+        status: document.getElementById('editStatus').value,
+        notes: document.getElementById('editNotes').value
+    };
+
+    // Show loading state
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    submitBtn.disabled = true;
+
+    fetch(`/api/update-customer/${customerId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess('Customer updated successfully');
+            closeSettingsModal();
+            location.reload();
+        } else {
+            throw new Error(data.error || 'Failed to update customer');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showError(error.message);
+    })
+    .finally(() => {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+function deleteCustomer(customerId) {
+    if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
+        fetch(`/api/customer/${customerId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess('Customer deleted successfully');
+                location.reload();
+            } else {
+                throw new Error(data.error || 'Failed to delete customer');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError(error.message);
+        });
+    }
+}
+
+function initializeModalHandlers() {
+    // Close modal when clicking outside
     window.onclick = function(event) {
         const modal = document.getElementById('customerSettingsModal');
-        if (event.target == modal) {
+        if (event.target === modal) {
             closeSettingsModal();
         }
-    }
+    };
 
-    // Add keyboard event listener for Escape key
+    // Close modal on Escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             const modal = document.getElementById('customerSettingsModal');
@@ -179,60 +297,16 @@
             }
         }
     });
+}
 
-    // Handle form submission
-    document.getElementById('customerSettingsForm').onsubmit = function(e) {
-        e.preventDefault();
-        const customerId = document.getElementById('customerId').value;
-        const data = {
-            phone_number: document.getElementById('editPhone').value,
-            name: document.getElementById('editName').value,
-            location: document.getElementById('editLocation').value,
-            last_job: document.getElementById('editLastJob').value,
-            status: document.getElementById('editStatus').value,
-            notes: document.getElementById('editNotes').value
-        };
+function showSuccess(message) {
+    // Implement your success notification here
+    alert(message); // Replace with your preferred notification system
+}
 
-        fetch(`/api/update-customer/${customerId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                closeSettingsModal();
-                location.reload();
-            } else {
-                alert(data.error || 'An error occurred');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while saving');
-        });
-    };
-
-    function deleteCustomer(customerId) {
-        if (confirm('Are you sure you want to delete this customer?')) {
-            fetch(`/api/customer/${customerId}`, {
-                method: 'DELETE'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.error || 'Error deleting customer');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error deleting customer');
-            });
-        }
-    }
+function showError(message) {
+    // Implement your error notification here
+    alert(message); // Replace with your preferred notification system
+}
 </script>
-{% endblock %} 
+{% endblock %}

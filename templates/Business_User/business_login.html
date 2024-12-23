@@ -1,51 +1,43 @@
-{% extends "business_user/business_base.html" %}
-
-{% block title %}Login - MissCall App{% endblock %}
-
+{% extends "Business_User/business_base.html" %}
+{% block title %}Business Login - MissCall App{% endblock %}
 {% block auth_content %}
-<div class="auth-container">
-    <h1 class="auth-title">
-        Влезте в<br>
-        MissCall App
-    </h1>
+
+<div class="login-box">
+    <div class="login-header">
+        <h1>Welcome Back</h1>
+        <p>Please login to continue</p>
+    </div>
+
+    <div class="login-tabs">
+        <a href="{{ url_for('business_login') }}" class="tab-btn active">Business Login</a>
+        <a href="{{ url_for('customer_login') }}" class="tab-btn">Customer Login</a>
+    </div>
+
     {% with messages = get_flashed_messages() %}
         {% if messages %}
             {% for message in messages %}
-                <div class="flash-message error">{{ message }}</div>
+                <div class="alert alert-danger">{{ message }}</div>
             {% endfor %}
         {% endif %}
     {% endwith %}
+
     <form method="POST">
         <div class="form-group">
-            <label for="username">Потребителско име</label>
-            <input 
-                type="text" 
-                id="username" 
-                name="username" 
-                required 
-                placeholder="Въведете име"
-                autocomplete="username"
-                oninvalid="this.setCustomValidity('Моля, въведете потребителско име')"
-                oninput="this.setCustomValidity('')"
-            >
+            <label>Username</label>
+            <input type="text" name="username" required>
         </div>
+
         <div class="form-group">
-            <label for="password">Парола</label>
-            <input 
-                type="password" 
-                id="password" 
-                name="password" 
-                required 
-                placeholder="Въведете парола"
-                autocomplete="current-password"
-                oninvalid="this.setCustomValidity('Моля, въведете парола')"
-                oninput="this.setCustomValidity('')"
-            >
+            <label>Password</label>
+            <input type="password" name="password" required>
         </div>
-        <button type="submit" class="auth-btn">Login</button>
+
+        <button type="submit" class="login-btn">Login</button>
     </form>
-    <div class="auth-links">
-        <p>Нямате акаунт? <a href="{{ url_for('register') }}">Регистрирайте се тук</a></p>
+
+    <div class="register-link">
+        Don't have an account? <a href="{{ url_for('register', user_type='business') }}">Register here</a>
     </div>
 </div>
+
 {% endblock %}

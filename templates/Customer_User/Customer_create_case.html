@@ -1,0 +1,127 @@
+{% extends "Customer_User/Customer_base.html" %}
+
+{% block content %}
+<div class="create-case-container">
+    <div class="section-header">
+        <h1>
+            {% if specialist %}
+                Create Case with {{ specialist.username }}
+            {% else %}
+                Create New Case
+            {% endif %}
+        </h1>
+    </div>
+
+    <form method="POST" class="case-form">
+        {{ form.csrf_token }}
+        
+        <div class="form-group">
+            {{ form.title.label }}
+            {{ form.title(class="form-control", placeholder="Brief description of your issue") }}
+            {% if form.title.errors %}
+                {% for error in form.title.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", rows=4, placeholder="Detailed description of the work needed") }}
+            {% if form.description.errors %}
+                {% for error in form.description.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        {% if not specialist %}
+        <div class="form-group">
+            {{ form.specialization.label }}
+            {{ form.specialization(class="form-control") }}
+            {% if form.specialization.errors %}
+                {% for error in form.specialization.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.specialist.label }}
+            {{ form.specialist(class="form-control") }}
+            {% if form.specialist.errors %}
+                {% for error in form.specialist.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="form-group">
+            {{ form.budget.label }}
+            {{ form.budget(class="form-control", placeholder="Enter your budget") }}
+            {% if form.budget.errors %}
+                {% for error in form.budget.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.timeline.label }}
+            {{ form.timeline(class="form-control") }}
+            {% if form.timeline.errors %}
+                {% for error in form.timeline.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="form-group" id="dateSelection" style="display: none;">
+            {{ form.preferred_date.label }}
+            {{ form.preferred_date(class="form-control") }}
+            {% if form.preferred_date.errors %}
+                {% for error in form.preferred_date.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.location.label }}
+            {{ form.location(class="form-control", placeholder="Address where work is needed") }}
+            {% if form.location.errors %}
+                {% for error in form.location.errors %}
+                    <span class="error">{{ error }}</span>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-paper-plane"></i> Submit Case
+            </button>
+            <button type="button" class="cancel-btn" onclick="history.back()">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const timelineSelect = document.querySelector('select[name="timeline"]');
+    const dateSelection = document.getElementById('dateSelection');
+
+    timelineSelect.addEventListener('change', function() {
+        if (this.value === 'planned') {
+            dateSelection.style.display = 'block';
+        } else {
+            dateSelection.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

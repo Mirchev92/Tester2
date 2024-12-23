@@ -1,0 +1,37 @@
+{% extends "Customer_User/Customer_base.html" %}
+{% block content %}
+<div class="dashboard-container">
+    <h1>Welcome, {{ current_user.username }}</h1>
+    
+    <div class="dashboard-stats">
+        <div class="stat-card">
+            <h3>Active Cases</h3>
+            <p class="stat-number">{{ active_cases }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Completed Cases</h3>
+            <p class="stat-number">{{ completed_cases }}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Specialists</h3>
+            <p class="stat-number">{{ total_specialists }}</p>
+        </div>
+        <div class="stat-card">
+            <span class="stat-title">Active Cases</span>
+            <span class="stat-number">{{ active_cases }}</span>
+        </div>
+    </div>
+
+    <div class="recent-activity">
+        <h2>Recent Activity</h2>
+        <div class="activity-list">
+            {% for activity in recent_activities %}
+            <div class="activity-item">
+                <span class="activity-date">{{ activity.date }}</span>
+                <span class="activity-description">{{ activity.description }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

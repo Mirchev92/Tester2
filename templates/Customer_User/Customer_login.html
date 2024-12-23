@@ -1,0 +1,53 @@
+{% extends "Customer_User/Customer_base.html" %}
+{% block title %}Customer Login - MissCall App{% endblock %}
+{% block auth_content %}
+
+<div class="login-box">
+    <div class="login-header">
+        <h1>Welcome Back</h1>
+        <p>Please login to continue</p>
+    </div>
+
+    <div class="login-tabs">
+        <a href="{{ url_for('business_login') }}" class="tab-btn">Business Login</a>
+        <a href="{{ url_for('customer_login') }}" class="tab-btn active">Customer Login</a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-danger">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('customer_login') }}" class="login-form">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required placeholder="Enter your username">
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required placeholder="Enter your password">
+        </div>
+
+        <button type="submit" class="login-btn">Login</button>
+    </form>
+
+    <div class="alternative-actions">
+        <div class="divider">or</div>
+        <a href="{{ url_for('create_guest_case') }}" class="guest-btn">
+            Continue as Guest
+        </a>
+    </div>
+
+    <div class="register-link">
+        Don't have an account? <a href="{{ url_for('customer_register') }}">Register here</a>
+    </div>
+</div>
+
+{% endblock %}

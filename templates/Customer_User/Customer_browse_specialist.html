@@ -1,0 +1,502 @@
+{% extends "Customer_User/Customer_base.html" %}
+
+{% block content %}
+<div class="specialists-container">
+    <div class="section-header">
+        <h2>Browse Specialists</h2>
+        <div class="filter-controls">
+            <select class="filter-select">
+                <option value="">All Specializations</option>
+                <option value="electrician">Electrician</option>
+                <option value="plumber">Plumber</option>
+                <option value="carpenter">Carpenter</option>
+                <option value="painter">Painter</option>
+            </select>
+            <div class="search-box">
+                <input type="text" placeholder="Search specialists...">
+                <i class="fas fa-search"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="specialists-grid">
+        {% for specialist in specialists %}
+            <div class="specialist-card {% if specialist.is_favorite %}favorite{% endif %}" data-specialist-id="{{ specialist.id }}">
+                <button class="favorite-btn {% if specialist.is_favorite %}active{% endif %}" 
+                data-specialist-id="{{ specialist.id }}">
+                <i class="fa-star {% if specialist.is_favorite %}fas{% else %}far{% endif %}"></i>
+
+        </button>
+    
+                <div class="specialist-header">
+                    <div class="specialist-avatar">
+                        {% if specialist.profile_picture %}
+                            {% set profile_path = 'uploads/' + specialist.profile_picture if not specialist.profile_picture.startswith('uploads/') else specialist.profile_picture %}
+                            <img src="{{ url_for('static', filename=profile_path) }}"
+                                 alt="{{ specialist.username }}'s profile"
+                                 class="profile-image"
+                                 onerror="this.src='/static/images/default-avatar.png'">
+                        {% else %}
+                            <img src="/static/images/default-avatar.png"
+                                 alt="{{ specialist.username }}'s profile"
+                                 class="profile-image">
+                        {% endif %}
+                    </div>
+                    <div class="specialist-status {% if specialist.is_online %}online{% else %}offline{% endif %}">
+                        <i class="fas fa-circle"></i>
+                        {{ "Online" if specialist.is_online else "Offline" }}
+                    </div>
+                </div>
+
+                <div class="specialist-info">
+                    <h3>{{ specialist.username }}</h3>
+                    <div class="rating-display">
+                        <div class="stars">
+                            {% for i in range(5) %}
+                                <i class="fas fa-star {% if i < specialist.rating|round(0, 'floor') %}filled{% endif %}"></i>
+                            {% endfor %}
+                        </div>
+                        <span class="rating-value">{{ "%.1f"|format(specialist.rating or 0) }}</span>
+                        <span class="reviews-count">({{ specialist.reviews_count or 0 }} reviews)</span>
+                    </div>
+                    <div class="specialist-details">
+                        <p><i class="fas fa-tools"></i> {{ specialist.specialization or 'Not specified' }}</p>
+                        <p><i class="fas fa-map-marker-alt"></i> {{ specialist.location or 'Location not specified' }}</p>
+                        <p><i class="fas fa-clock"></i> {{ specialist.working_hours or '09:00 - 18:00' }}</p>
+                    </div>
+                </div>
+
+                <div class="specialist-stats">
+                    <div class="stat">
+                        <span class="stat-value">{{ specialist.completed_jobs or 0 }}</span>
+                        <span class="stat-label">Jobs Done</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value">{{ specialist.response_rate or 0 }}%</span>
+                        <span class="stat-label">Response Rate</span>
+                    </div>
+                </div>
+
+                <div class="specialist-actions">
+                    <a href="{{ url_for('customer_create_case', specialist_id=specialist.id) }}" 
+                       class="action-btn primary">
+                        <i class="fas fa-plus"></i> Create Case
+                    </a>
+                    <button class="action-btn secondary" 
+                            onclick="viewProfile('{{ specialist.id }}')">
+                        <i class="fas fa-user"></i> View Profile
+                    </button>
+                    <button class="action-btn secondary" 
+                            onclick="openReviewModal('{{ specialist.id }}')">
+                        <i class="fas fa-comment"></i> Write Review
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Profile Modal -->
+<div id="profileModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div class="profile-details">
+            <div class="profile-header">
+                <div class="profile-image-container">
+                    <div id="modalProfilePic" class="current-picture">
+                        <!-- Profile image will be inserted here -->
+                    </div>
+                </div>
+                <div class="profile-info">
+                    <h2 id="modalUsername"></h2>
+                    <div class="specialist-details">
+                        <p><i class="fas fa-tools"></i> <span id="modalSpecialization"></span></p>
+                        <p><i class="fas fa-map-marker-alt"></i> <span id="modalLocation"></span></p>
+                        <p><i class="fas fa-clock"></i> <span id="modalWorkingHours"></span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="profile-section">
+                <h3>Professional Info</h3>
+                <p id="modalBio"></p>
+                <p><i class="fas fa-briefcase"></i> Experience: <span id="modalExperience"></span> years</p>
+            </div>
+
+            <div class="profile-section">
+                <h3>Work Gallery</h3>
+                <div id="modalGallery" class="gallery-grid">
+                    <!-- Gallery images will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Reviews section -->
+            <div class="reviews-section">
+                <h3>Reviews</h3>
+                <div id="specialistReviews">
+                    <!-- Reviews will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div id="reviewModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeReviewModal()">&times;</span>
+        <h2>Write a Review</h2>
+        <div id="reviewUpdateMessage"></div>
+        <div class="rating">
+            <i class="far fa-star" onclick="setRating(1)" title="1 star"></i>
+            <i class="far fa-star" onclick="setRating(2)" title="2 stars"></i>
+            <i class="far fa-star" onclick="setRating(3)" title="3 stars"></i>
+            <i class="far fa-star" onclick="setRating(4)" title="4 stars"></i>
+            <i class="far fa-star" onclick="setRating(5)" title="5 stars"></i>
+        </div>
+        <textarea id="reviewComment" placeholder="Write your review here..."></textarea>
+        <button onclick="submitReview()" class="submit-review">Submit Review</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='css/js/customer_scripts.js') }}" defer></script>
+
+<script>
+let currentSpecialistId = null;
+let isUpdatingReview = false;
+let currentRating = 0;
+
+function viewProfile(specialistId) {
+    fetch(`/api/specialist/${specialistId}/profile`)
+        .then(response => response.json())
+        .then(responseData => {
+            if (!responseData) {
+                throw new Error('No data received from server');
+            }
+
+            const data = responseData;
+            
+            // Update profile information
+            const elements = {
+                modalUsername: data.username || '',
+                modalSpecialization: data.specialization || 'Not specified',
+                modalLocation: data.location || 'Location not specified',
+                modalWorkingHours: data.working_hours || '09:00 - 18:00',
+                modalBio: data.bio || 'No bio available',
+                modalExperience: data.years_experience || '0'
+            };
+
+            // Update all text elements
+            Object.entries(elements).forEach(([id, text]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = text;
+                }
+            });
+
+            // Update profile picture
+            const profilePicContainer = document.getElementById('modalProfilePic');
+            if (profilePicContainer) {
+                if (data.profile_picture) {
+                    const staticUrl = "{{ url_for('static', filename='') }}";
+                    const profilePath = data.profile_picture.startsWith('uploads/') ? data.profile_picture : `uploads/${data.profile_picture}`;
+                    profilePicContainer.innerHTML = `
+                        <img src="${staticUrl}${profilePath}" 
+                             alt="${data.username || 'Specialist'}'s profile" 
+                             class="profile-image"
+                             onerror="this.src='/static/images/default-avatar.png'">`;
+                } else {
+                    profilePicContainer.innerHTML = `
+                        <img src="/static/images/default-avatar.png"
+                             alt="Default profile" 
+                             class="profile-image">`;
+                }
+            }
+
+            // Update gallery
+            const galleryContainer = document.getElementById('modalGallery');
+            if (galleryContainer) {
+                galleryContainer.innerHTML = '';
+                
+                if (data.gallery_items && Array.isArray(data.gallery_items) && data.gallery_items.length > 0) {
+                    const staticUrl = "{{ url_for('static', filename='') }}";
+                    data.gallery_items.forEach(item => {
+                        const galleryItem = document.createElement('div');
+                        galleryItem.className = 'gallery-item';
+                        const imagePath = typeof item === 'string' ? item : (item.image_path || '');
+                        if (imagePath) {
+                            const galleryPath = imagePath.startsWith('uploads/') ? imagePath : `uploads/${imagePath}`;
+                            galleryItem.innerHTML = `
+                                <img src="${staticUrl}${galleryPath}" 
+                                     alt="Gallery image"
+                                     onerror="this.style.display='none';">
+                                <div class="gallery-item-overlay">
+                                    <p>${(typeof item === 'object' && item.description) || ''}</p>
+                                </div>`;
+                            galleryContainer.appendChild(galleryItem);
+                        }
+                    });
+                } else {
+                    galleryContainer.innerHTML = '<p class="no-gallery">No gallery items available</p>';
+                }
+            }
+
+            // Show the modal
+            const modal = document.getElementById('profileModal');
+            if (modal) {
+                modal.style.display = 'block';
+                // Load reviews
+                if (typeof loadReviews === 'function') {
+                    loadReviews(specialistId);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching profile:', error);
+            const modal = document.getElementById('profileModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        });
+}
+
+// Close modal when clicking the X
+document.querySelector('.close').onclick = function() {
+    document.getElementById('profileModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('profileModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+
+async function loadReviews(specialistId) {
+    try {
+        const response = await fetch(`/customer/api/reviews/${specialistId}`);
+        const reviews = await response.json();
+        
+        const reviewsContainer = document.getElementById('specialistReviews');
+        if (reviews.length === 0) {
+            reviewsContainer.innerHTML = '<p>No reviews yet</p>';
+            return;
+        }
+        
+        reviewsContainer.innerHTML = reviews.map(review => `
+            <div class="review-item">
+                <div class="review-header">
+                    <span class="review-author">${review.customer_name}</span>
+                    <div class="review-rating">
+                        ${Array(5).fill('').map((_, i) => 
+                            `<i class="fas fa-star${i < review.rating ? '' : ' far'}"></i>`
+                        ).join('')}
+                    </div>
+                </div>
+                <div class="review-date">${review.created_at}</div>
+                <div class="review-comment">${review.comment}</div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading reviews:', error);
+    }
+}
+
+function openReviewModal(specialistId) {
+    currentSpecialistId = specialistId;
+    const modal = document.getElementById('reviewModal');
+    const messageDiv = document.getElementById('reviewUpdateMessage');
+    
+    // Reset the form
+    document.getElementById('reviewComment').value = '';
+    resetStars();
+    
+    // Check if user has already reviewed this specialist
+    fetch(`/customer/api/review/${specialistId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                isUpdatingReview = true;
+                messageDiv.innerHTML = '<p class="update-message">You are updating your previous review</p>';
+                currentRating = data.rating;
+                setRating(data.rating);
+                document.getElementById('reviewComment').value = data.comment;
+            } else {
+                isUpdatingReview = false;
+                messageDiv.innerHTML = '';
+                currentRating = 0;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    
+    modal.style.display = 'block';
+}
+
+function resetStars() {
+    const stars = document.querySelectorAll('.rating .fa-star');
+    stars.forEach(star => {
+        star.className = 'far fa-star';
+    });
+    currentRating = 0;
+}
+
+function setRating(rating) {
+    currentRating = rating;
+    const stars = document.querySelectorAll('.rating .fa-star');
+    stars.forEach((star, index) => {
+        star.className = index < rating ? 'fas fa-star' : 'far fa-star';
+    });
+}
+
+function submitReview() {
+    if (!currentRating) {
+        alert('Please select a rating');
+        return;
+    }
+    
+    const comment = document.getElementById('reviewComment').value.trim();
+    if (!comment) {
+        alert('Please write a review comment');
+        return;
+    }
+    
+    // Find the specialist card using the button's data attribute
+    const specialistCard = document.querySelector(`.specialist-card button[data-specialist-id="${currentSpecialistId}"]`).closest('.specialist-card');
+    
+    fetch('/customer/api/review', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            specialist_id: currentSpecialistId,
+            rating: currentRating,
+            comment: comment
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // First update the card display
+            fetch(`/api/specialist/${currentSpecialistId}/profile`)
+                .then(res => res.json())
+                .then(profileData => {
+                    // Update the rating display in the card
+                    const ratingDisplay = specialistCard.querySelector('.rating-display');
+                    if (ratingDisplay) {
+                        const stars = ratingDisplay.querySelector('.stars');
+                        const ratingValue = ratingDisplay.querySelector('.rating-value');
+                        const reviewsCount = ratingDisplay.querySelector('.reviews-count');
+                        
+                        if (stars) {
+                            stars.innerHTML = Array(5).fill(0).map((_, i) => 
+                                `<i class="fas fa-star ${i < Math.floor(profileData.rating) ? 'filled' : ''}"></i>`
+                            ).join('');
+                        }
+                        if (ratingValue) {
+                            ratingValue.textContent = profileData.rating.toFixed(1);
+                        }
+                        if (reviewsCount) {
+                            reviewsCount.textContent = `(${profileData.reviews_count} reviews)`;
+                        }
+                    }
+                    
+                    // Update the modal content
+                    document.getElementById('modalUsername').textContent = profileData.username;
+                    document.getElementById('modalSpecialization').textContent = profileData.specialization || 'Not specified';
+                    document.getElementById('modalLocation').textContent = profileData.location || 'Location not specified';
+                    document.getElementById('modalWorkingHours').textContent = profileData.working_hours || '09:00 - 18:00';
+                    document.getElementById('modalBio').textContent = profileData.bio || 'No bio available';
+                    document.getElementById('modalExperience').textContent = profileData.years_experience || '0';
+                    
+                    // Update reviews in modal
+                    fetch(`/customer/api/reviews/${currentSpecialistId}`)
+                        .then(res => res.json())
+                        .then(reviewsData => {
+                            const reviewsContainer = document.getElementById('specialistReviews');
+                            reviewsContainer.innerHTML = '';
+                            
+                            if (reviewsData && reviewsData.length > 0) {
+                                reviewsData.forEach(review => {
+                                    const reviewElement = document.createElement('div');
+                                    reviewElement.className = 'review-item';
+                                    reviewElement.innerHTML = `
+                                        <div class="review-header">
+                                            <div class="review-rating">
+                                                ${Array(5).fill(0).map((_, i) => 
+                                                    `<i class="fas fa-star ${i < review.rating ? 'filled' : ''}"></i>`
+                                                ).join('')}
+                                            </div>
+                                            <div class="review-date">${new Date(review.created_at).toLocaleDateString()}</div>
+                                        </div>
+                                        <div class="review-comment">${review.comment}</div>`;
+                                    reviewsContainer.appendChild(reviewElement);
+                                });
+                            } else {
+                                reviewsContainer.innerHTML = '<p class="no-reviews">No reviews yet</p>';
+                            }
+                        });
+                });
+            
+            // Close the review modal
+            closeReviewModal();
+        } else {
+            alert(data.error || 'Error submitting review');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error submitting review');
+    });
+}
+
+function closeReviewModal() {
+    const modal = document.getElementById('reviewModal');
+    modal.style.display = 'none';
+    currentSpecialistId = null;
+    isUpdatingReview = false;
+    currentRating = 0;
+}
+
+// Search and filter functionality can be added here
+document.addEventListener('DOMContentLoaded', function() {
+   const searchInput = document.querySelector('.search-box input');
+   const filterSelect = document.querySelector('.filter-select');
+   const specialistCards = document.querySelectorAll('.specialist-card');
+
+   specialistCards.forEach(card => {
+       // Add favorite button
+       const specialistId = card.dataset.specialistId;
+       const favoriteBtn = document.createElement('button');
+       favoriteBtn.className = 'favorite-btn';
+       favoriteBtn.dataset.specialistId = specialistId;
+       favoriteBtn.innerHTML = '<i class="far fa-star"></i>';
+       card.insertBefore(favoriteBtn, card.firstChild);
+   });
+
+   function filterSpecialists() {
+       const searchTerm = searchInput.value.toLowerCase();
+       const selectedSpecialization = filterSelect.value.toLowerCase();
+
+       specialistCards.forEach(card => {
+           const specialization = card.querySelector('.specialist-details p:first-child').textContent.toLowerCase();
+           const username = card.querySelector('.specialist-info h3').textContent.toLowerCase();
+           const location = card.querySelector('.specialist-details p:nth-child(2)').textContent.toLowerCase();
+
+           const matchesSearch = username.includes(searchTerm) ||
+                               location.includes(searchTerm) ||
+                               specialization.includes(searchTerm);
+           const matchesFilter = !selectedSpecialization || specialization.includes(selectedSpecialization);
+
+           card.style.display = matchesSearch && matchesFilter ? 'block' : 'none';
+       });
+   }
+
+    searchInput.addEventListener('input', filterSpecialists);
+    filterSelect.addEventListener('change', filterSpecialists);
+});
+</script>
+{% endblock %}

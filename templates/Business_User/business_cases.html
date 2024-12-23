@@ -1,0 +1,290 @@
+{% extends "Business_User/business_base.html" %}
+{% block content %}
+
+<!-- Points Header -->
+<div class="points-balance">
+  <div class="points-header">Available Points</div>
+  <div class="points-value">{{ current_user.business_profile.points_balance }}</div>
+  {% if current_user.business_profile.points_balance < 30 %}
+  <div class="points-warning">
+      <i class="fas fa-exclamation-triangle"></i>
+      Low points balance! Consider purchasing more points.
+  </div>
+  {% endif %}
+</div>
+
+<!-- Main Cases Container -->
+<div class="cases-container">
+    <!-- Pending Cases -->
+    <div class="cases-section">
+        <div class="section-header">
+            <i class="fas fa-clock"></i>
+            <h2>Pending Cases</h2>
+            <span class="case-count">{{ pending_cases|length }}</span>
+        </div>
+        
+        <div class="cases-grid">
+            {% if pending_cases %}
+                {% for case in pending_cases %}
+                <div class="case-card">
+                    <div class="case-header">
+                        <span class="case-id">#{{ case.id }}</span>
+                        <span class="status-badge pending">Pending</span>
+                        <div class="case-date">
+                            <i class="far fa-calendar"></i>
+                            {{ case.created_at.strftime('%Y-%m-%d') }}
+                        </div>
+                    </div>
+                    
+                    <div class="case-info">
+                        <div class="info-row">
+                            <i class="far fa-user"></i>
+                            <span>Customer: {{ case.customer.username }}</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-wallet"></i>
+                            <span>Budget: {{ case.budget }} BGN</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Location: {{ case.location }}</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-coins"></i>
+                            <span>Points Required: {{ (case.budget / 10)|round|int + 1 }}</span>
+                        </div>
+                    </div>
+
+                    {% if current_user.business_profile.points_balance < ((case.budget / 10)|round|int + 1) %}
+                    <div class="insufficient-points">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Insufficient points for this case
+                    </div>
+                    {% endif %}
+
+                    <div class="case-actions">
+                        <button class="accept-case" 
+                                onclick="acceptCase('{{ case.id }}')"
+                                {% if current_user.business_profile.points_balance < ((case.budget / 10)|round|int + 1) %}disabled{% endif %}>
+                            <i class="fas fa-check"></i>
+                            Accept
+                        </button>
+                        <button class="decline-case" onclick="declineCase('{{ case.id }}')">
+                            <i class="fas fa-times"></i>
+                            Decline
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-cases">
+                    <i class="far fa-folder-open"></i>
+                    <p>No pending cases available</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Active Cases -->
+    <div class="cases-section">
+        <div class="section-header">
+            <i class="fas fa-tasks"></i>
+            <h2>Active Cases</h2>
+            <span class="case-count">{{ assigned_cases|length }}</span>
+        </div>
+        
+        <div class="cases-grid">
+            {% if assigned_cases %}
+                {% for case in assigned_cases %}
+                <div class="case-card">
+                    <div class="case-header">
+                        <span class="case-id">#{{ case.id }}</span>
+                        <span class="status-badge active">Active</span>
+                        <div class="case-date">
+                            <i class="far fa-calendar"></i>
+                            {{ case.accepted_at.strftime('%Y-%m-%d') if case.accepted_at else case.updated_at.strftime('%Y-%m-%d') }}
+                        </div>
+                    </div>
+                    
+                    <div class="case-info">
+                        <div class="info-row">
+                            <i class="far fa-user"></i>
+                            <span>Customer: {{ case.customer.username }}</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-wallet"></i>
+                            <span>Budget: {{ case.budget }} BGN</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Location: {{ case.location }}</span>
+                        </div>
+                    </div>
+
+                    <div class="case-actions">
+                        <button class="btn-complete" onclick="completeCase('{{ case.id }}')">
+                            <i class="fas fa-check-circle"></i>
+                            Mark Complete
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-cases">
+                    <i class="far fa-folder-open"></i>
+                    <p>No active cases</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Declined Cases -->
+    <div class="cases-section">
+        <div class="section-header">
+            <i class="fas fa-times-circle"></i>
+            <h2>Declined Cases</h2>
+            <span class="case-count">{{ declined_cases|length }}</span>
+        </div>
+        
+        <div class="cases-grid">
+            {% if declined_cases %}
+                {% for case in declined_cases %}
+                <div class="case-card">
+                    <div class="case-header">
+                        <span class="case-id">#{{ case.id }}</span>
+                        <span class="status-badge declined">Declined</span>
+                        <div class="case-date">
+                            <i class="far fa-calendar"></i>
+                            {{ case.updated_at.strftime('%Y-%m-%d') }}
+                        </div>
+                    </div>
+                    
+                    <div class="case-info">
+                        <div class="info-row">
+                            <i class="far fa-user"></i>
+                            <span>Customer: {{ case.customer.username }}</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-wallet"></i>
+                            <span>Budget: {{ case.budget }} BGN</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Location: {{ case.location }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-cases">
+                    <i class="far fa-folder-open"></i>
+                    <p>No declined cases</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Completed Cases -->
+    <div class="cases-section">
+        <div class="section-header">
+            <i class="fas fa-check-circle"></i>
+            <h2>Completed Cases</h2>
+            <span class="case-count">{{ completed_cases|length }}</span>
+        </div>
+        
+        <div class="cases-grid">
+            {% if completed_cases %}
+                {% for case in completed_cases %}
+                <div class="case-card">
+                    <div class="case-header">
+                        <span class="case-id">#{{ case.id }}</span>
+                        <span class="status-badge completed">Completed</span>
+                        <div class="case-date">
+                            <i class="far fa-calendar"></i>
+                            {{ case.updated_at.strftime('%Y-%m-%d') }}
+                        </div>
+                    </div>
+                    
+                    <div class="case-info">
+                        <div class="info-row">
+                            <i class="far fa-user"></i>
+                            <span>Customer: {{ case.customer.username }}</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-wallet"></i>
+                            <span>Budget: {{ case.budget }} BGN</span>
+                        </div>
+                        <div class="info-row">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Location: {{ case.location }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-cases">
+                    <i class="far fa-folder-open"></i>
+                    <p>No completed cases</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle accept case buttons
+    document.querySelectorAll('.accept-case').forEach(button => {
+        button.addEventListener('click', function() {
+            const caseId = this.closest('.case-card').querySelector('.case-id').textContent;
+            if (confirm('Are you sure you want to accept this case?')) {
+                window.location.href = `/business/case/${caseId}/accept`;
+            }
+        });
+    });
+
+    // Handle decline case buttons
+    document.querySelectorAll('.decline-case').forEach(button => {
+        button.addEventListener('click', function() {
+            const caseId = this.closest('.case-card').querySelector('.case-id').textContent;
+            if (confirm('Are you sure you want to decline this case?')) {
+                window.location.href = `/business/case/${caseId}/decline`;
+            }
+        });
+    });
+
+    // Handle case completion
+    document.querySelectorAll('.btn-complete').forEach(button => {
+        button.addEventListener('click', async function() {
+            const caseId = this.parentNode.parentNode.querySelector('.case-id').textContent;
+            if (!confirm('Are you sure you want to mark this case as complete?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/business/cases/${caseId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Refresh the page to show updated case lists
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Error completing case');
+                }
+            } catch (error) {
+                alert('Error completing case: ' + error);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

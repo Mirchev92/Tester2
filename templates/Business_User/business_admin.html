@@ -92,6 +92,7 @@
                 <thead>
                     <tr>
                         <th>Username</th>
+                        <th>User Type</th>
                         <th>Phone Number</th>
                         <th>SMS Status</th>
                         <th>Admin Status</th>
@@ -106,6 +107,11 @@
                                 <span class="user-avatar">{{ user.username[0] | upper }}</span>
                                 <span class="user-name">{{ user.username }}</span>
                             </div>
+                        </td>
+                        <td>
+                            <span class="user-type-badge {{ user.user_type }}">
+                                {{ user.user_type | title }}
+                            </span>
                         </td>
                         <td>{{ user.phone_number }}</td>
                         <td>
@@ -411,4 +417,4 @@
     // Initial load
     updateActivityLog();
 </script>
-{% endblock %} 
+{% endblock %}
